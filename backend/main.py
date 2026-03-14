@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
+from PIL import Image 
+import io 
 from database import supabase #import client from database.py 
 
 app = FastAPI() 
@@ -20,9 +22,16 @@ async def root():
 async def upload_image(image: UploadFile = File(...)):
     contents = await image.read()
 
+    #compress img 
+    img = Image.open(io.BytesIO(contents)) 
+    img.thumbnail((1920, 1920)) #resize to max 1920x1920 
+    img_io = io.BytesIO() 
+    img.save(img_io, format=img.format or "JPEG", quality=85, optimize=True) 
+    img_io.seek(0) 
+    contents = img_io.read()  
+
     #just autogenerate user id for now, need to be replace later with real user id from auth system
-    uuid_object = uuid.uuid4() 
-    user_id = str(uuid_object)
+    user_id = "cb27c878-b296-4b67-b782-006c6fae56b4"
 
     clean_filename = image.filename.replace(" ", "_") 
     unique_filename = f"{user_id}_{clean_filename}"
