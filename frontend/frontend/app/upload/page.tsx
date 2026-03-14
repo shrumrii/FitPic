@@ -1,0 +1,81 @@
+"use client"; 
+
+import Image from "next/image";
+import { useState } from "react"; 
+
+export default function UploadPage() {
+  
+  const [selectedFile, setSelectedFile] = useState<File | null>(null); //typescript generic, initially null, but HAS TO be a File object when a file is selected
+  const [uploading, setUploading] = useState(false); 
+  const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null); ; 
+  
+  const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setSelectedFile(e.target.files[0]);
+    }
+  };
+
+  const handleUpload = async () => {
+    if (!selectedFile) return; 
+    setUploading(true);
+  
+    const formData = new FormData(); 
+    formData.append("image", selectedFile);
+
+    //response 
+    try { 
+      const response = await fetch("http://localhost:8000/images/upload", {
+        method: "POST", 
+        body: formData
+      })
+
+      if (!response.ok) { 
+        console.log(await response.text())  
+        throw new Error("Upload failed"); 
+      }
+
+      const result = await response.json(); 
+      if (result.success) { 
+        setUploadedImage(result.data); 
+      } 
+
+    } catch (error) { 
+      console.error("Upload failed", error);
+      alert("Upload failed. Please try again."); 
+    } finally { 
+      setUploading(false); 
+    }
+  }; 
+  
+  return (
+    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
+        <h1 className="text-5xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
+          Upload Your Image
+        </h1>
+
+        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+          {/* file input */}
+          <input 
+            type="file"
+            accept="image/*" 
+            onChange={fileChange}  
+          />
+        
+
+          {/* upload button */}
+          <button onClick={handleUpload} disabled={!selectedFile || uploading}> 
+          {uploading ? "Uploading..." : "Upload"}
+          </button>
+
+          {/* see uploaded image */}
+          {uploadedImage && (
+            <div className="mt-6 rounded-xl overflow-hidden shadow-md">
+              <Image src={uploadedImage.url} alt="Uploaded fit" width={400} height={400} /> 
+            </div>
+          )}    
+        </div> 
+      </main>
+    </div>
+  );
+} 
