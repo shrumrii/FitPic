@@ -16,7 +16,8 @@ export default function Home() {
                 console.log("user", user); 
 
                 if (error) { 
-                    throw new Error("Failed to retrieve user from supabase auth");
+                    router.push("/welcoem"); 
+                    return; 
                 }
 
                 if (!user) { 
@@ -36,8 +37,7 @@ export default function Home() {
                     router.push("/onboarding"); 
                 }
             } catch (error) {
-                console.error("Error checking user authentication", error);
-                alert("An error occurred while checking authentication. Please try again.");
+                console.error(error);
                 router.push("/welcome");
             } finally { 
                 setLoading(false); 
