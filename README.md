@@ -24,6 +24,13 @@ Activate venv for backend: source venv/bin/activate
 Run backend fastAPI: fastapi dev 
 Run frontend Next.JS: npm run dev 
 
+TODO:
+- refine the upload page
+-  Set up user login and authentication system 
+-  AI model 
+- UI / page design 
+- API design 
+
 
 
 
