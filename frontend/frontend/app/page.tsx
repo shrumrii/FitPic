@@ -16,7 +16,7 @@ export default function Home() {
                 console.log("user", user); 
 
                 if (error) { 
-                    router.push("/welcoem"); 
+                    router.push("/welcome"); 
                     return; 
                 }
 
