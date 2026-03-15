@@ -10,21 +10,37 @@ export default function Home() {
 
     useEffect(() => { 
         const checkUser = async () => { 
-            const { data: { user }, error } = await supabase.auth.getUser(); 
-            console.log("user", user); 
-             
 
-            if (error) { 
-                console.error("Failure to retrieve user from supabase auth", error);
-            }
-            setLoading(false);
+            try { 
+                const { data: { user }, error } = await supabase.auth.getUser(); 
+                console.log("user", user); 
 
-            if (!user) { 
-                console.log("No user found, redirect to welcome page"); 
+                if (error) { 
+                    throw new Error("Failed to retrieve user from supabase auth");
+                }
+
+                if (!user) { 
+                    console.log("No user found, redirect to welcome page");
+                    router.push("/welcome");
+                    return; 
+                } 
+
+                const response = await fetch(`http://localhost:8000/users/${user.id}`); 
+                const result = await response.json();
+
+                if (result.success) { 
+                    console.log("User exists in database, redirect to dashboard");
+                    router.push("/dashboard"); 
+                } else { 
+                    console.log("User not found in database, redirect to onboarding page");
+                    router.push("/onboarding"); 
+                }
+            } catch (error) {
+                console.error("Error checking user authentication", error);
+                alert("An error occurred while checking authentication. Please try again.");
                 router.push("/welcome");
-            } else { 
-                console.log("User found, redirect to onboarding page");
-                router.push("/welcome"); 
+            } finally { 
+                setLoading(false); 
             }
         }
         checkUser(); 

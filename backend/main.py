@@ -41,7 +41,21 @@ async def create_user(user: UserCreate):
         "message": f"User {user.username} created." 
     }
 
-
+@app.get("/users/{user_id}")
+async def get_user(user_id: str):
+    response = supabase.table("users").select("*").eq("user_id", user_id).execute() 
+    user = response.data[0] if response.data and len(response.data) > 0 else None
+    if user: 
+        return { 
+            "success": True, 
+            "data": user 
+        }
+    else: 
+        return { 
+            "success": False, 
+            "message": "User not found."
+        }
+          
 
 @app.post("/images/upload")
 async def upload_image(image: UploadFile = File(...)):
