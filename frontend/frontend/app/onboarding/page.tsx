@@ -3,14 +3,12 @@ import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
 import { useState } from "react";
 
+export default function Onboarding() {
 
-
-export default function Home() {
-
-    
     const [loading, setLoading] = useState(false); 
     const [step, setStep] = useState(1);
     const [formData, setFormData] = useState({ username: "", age: "" });  
+    const [error, setError] = useState(""); 
     const router = useRouter(); 
 
     const usernameAge = (e: React.ChangeEvent<HTMLInputElement>) => { 
@@ -22,16 +20,29 @@ export default function Home() {
 
         console.log(step); 
         if (step > 2) return;
+
+        if (step === 1 && !formData.username) {
+            setError("Please enter a username");
+            return;
+        }
+
         if (step == 2) { 
             createUser(); 
             return;
         }
+        setError(""); 
         setStep(prev => prev + 1);
     } 
 
     //send form data to backend, add user to db 
     const createUser = async () => { 
         setLoading(true); 
+
+        if (formData.age && Number(formData.age) <= 0) {
+            setError("Please enter a valid age"); 
+            setLoading(false);
+            return; 
+        } 
 
         try { 
             
@@ -70,7 +81,7 @@ export default function Home() {
                 throw new Error("Failed to create user and push user to database"); 
             }
 
-            router.push("/upload"); //redirect to upload page after successful user creation 
+            router.push("/dashboard"); //redirect to upload page after successful user creation 
         } catch (error) { 
             console.error(error);
         } finally { 
@@ -78,39 +89,44 @@ export default function Home() {
         }
     }
 
-
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-                <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+        <div className="flex min-h-screen items-center justify-center bg-zinc-100 font-sans dark:bg-black">
+            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black">
+                <div className="flex flex-col items-center gap-6 text-center">
                 <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-                    Onboarding. 
+                    {step === 1 ? "Provide a Username" : "How old are you?"}
                 </h1>
 
                 <div> 
                     {step === 1 && 
-                        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+                        <div className="flex flex-col items-center gap-6 text-center">
                             <form> 
-                                <input 
+                                <input className="border border-zinc-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-amber-400 transition-colors dark:border-zinc-600 dark:bg-zinc-900 dark:text-white" 
                                     type="text"
                                     name="username"
                                     placeholder="Username"
                                     onChange={usernameAge}/>
                             </form> 
-                            <button onClick={nextStep}> Next </button>
+                            <p className="text-sm text-red-500">{error}</p>
+                            <button className="bg-black text-white rounded-lg px-6 py-3 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                                onClick={nextStep}> Next 
+                            </button>
                         </div>
                     } 
 
                     {step === 2 && 
-                        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
+                        <div className="flex flex-col items-center gap-6 text-center">
                             <form> 
-                                <input 
+                                <input className="border border-zinc-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-amber-400 transition-colors dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
                                     type="number"
                                     name="age"
                                     placeholder="Age"
                                     onChange={usernameAge}/>
                             </form> 
-                            <button onClick={nextStep} disabled={loading}> {loading ? "Creating..." : "Create User"} </button>
+                            <p className="text-sm text-red-500">{error}</p>
+                            <button className="bg-black text-white rounded-lg px-6 py-3 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                                onClick={nextStep} disabled={loading}> {loading ? "Creating Profile..." : "Create Profile"} 
+                            </button>
                         </div>
                     } 
                 </div> 

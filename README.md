@@ -32,6 +32,7 @@ TODO:
 - UI / page design 
 - API design 
 - handle database user deletes 
+- middleware for route protection 
 
 
 
