@@ -27,7 +27,7 @@ export default function Signup() {
                 return
             }
 
-            router.push("/upload"); //redirect to upload after successful signup 
+            router.push("/onboarding"); //redirect to upload after successful signup 
         } catch (error) { 
             console.error("Signup failed", error); 
         } finally { 
@@ -60,9 +60,6 @@ export default function Signup() {
                 
                     <button onClick={handleSignup} disabled={loading}> {loading ? "Signing up..." : "Sign up"} </button>
                 </div>
-
-
-                
             </main> 
         </div>
     ); 

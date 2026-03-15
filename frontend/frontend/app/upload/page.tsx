@@ -7,7 +7,7 @@ export default function UploadPage() {
   
   const [selectedFile, setSelectedFile] = useState<File | null>(null); //typescript generic, initially null, but HAS TO be a File object when a file is selected
   const [uploading, setUploading] = useState(false); 
-  const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null); ; 
+  const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null); ;   
   
   const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
@@ -29,12 +29,12 @@ export default function UploadPage() {
         body: formData
       })
 
-      if (!response.ok) { 
+      if (!response.ok) { //server 
         console.log(await response.text())  
         throw new Error("Upload failed"); 
       }
 
-      const result = await response.json(); 
+      const result = await response.json(); //backend check
       if (result.success) { 
         setUploadedImage(result.data); 
       } 

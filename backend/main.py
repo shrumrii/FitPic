@@ -4,6 +4,7 @@ import uuid
 from PIL import Image 
 import io 
 from database import supabase #import client from database.py 
+from pydantic import BaseModel 
 
 app = FastAPI() 
 
@@ -17,6 +18,30 @@ app.add_middleware(
 @app.get("/") 
 async def root(): 
     return {"message": "Hello, World!"}  
+
+class UserCreate(BaseModel): #modify as needed when i change the users table schema 
+        id: str
+        email: str
+        username: str
+        age: int | None = None 
+
+@app.post("/users/create")
+async def create_user(user: UserCreate): 
+    data = { 
+        "user_id": user.id, 
+        "email": user.email, 
+        "username": user.username, 
+        "age": user.age
+        #created timestamp autopopulate in supabase 
+    }
+
+    response = supabase.table("users").insert(data).execute()
+    return {
+        "success": True, 
+        "message": f"User {user.username} created." 
+    }
+
+
 
 @app.post("/images/upload")
 async def upload_image(image: UploadFile = File(...)):
@@ -44,7 +69,6 @@ async def upload_image(image: UploadFile = File(...)):
 
     image_url = supabase.storage.from_("images").get_public_url(unique_filename)
 
-
     #store in images table 
     data = { 
         "url": image_url, 
@@ -64,3 +88,5 @@ async def upload_image(image: UploadFile = File(...)):
         "data": inserted_row, 
         "message": f"Image {image.filename} uploaded."
     }
+
+

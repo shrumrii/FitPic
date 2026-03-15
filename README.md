@@ -23,6 +23,7 @@ images Table:
 Activate venv for backend: source venv/bin/activate
 Run backend fastAPI: fastapi dev 
 Run frontend Next.JS: npm run dev 
+Identify and kill port: kill -9 $(lsof -t -i :8000)
 
 TODO:
 - refine the upload page
@@ -30,6 +31,7 @@ TODO:
 -  AI model 
 - UI / page design 
 - API design 
+- handle database user deletes 
 
 
 
