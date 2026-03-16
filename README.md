@@ -26,13 +26,27 @@ Run frontend Next.JS: npm run dev
 Identify and kill port: kill -9 $(lsof -t -i :8000)
 
 TODO:
+- 
 - refine the upload page
 -  Set up user login and authentication system 
 -  AI model 
 - UI / page design 
 - API design 
 - handle database user deletes 
-- middleware for route protection 
+- middleware for route protection
+
+DATABASE WORK: 
+- prevent data duplication 
+- handle row deletion 
+
+FRONTEND DESIGN WORK: 
+- continue designing dashboard 
+- add profile picture to navbar 
+- dropdown from profile 
+
+BACKEND WORK: 
+- 
+- brainstorm AI model and how to implement 
 
 
 

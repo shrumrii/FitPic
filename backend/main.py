@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
 import uuid
 from PIL import Image 
@@ -55,10 +55,55 @@ async def get_user(user_id: str):
             "success": False, 
             "message": "User not found."
         }
-          
+
+@app.post("/users/{user_id}/pfp")
+async def upload_pfp(user_id: str, image: UploadFile = File(...)): 
+    
+    #validate file type 
+    if image.content_type != "image/jpeg" and image.content_type != "image/png": 
+        return {
+            "success": False, 
+            "message": "Not a valid file type. Please use JPEG or PNG"
+        }
+    contents = await image.read() 
+
+    #compress img 
+    img = Image.open(io.BytesIO(contents))
+    img.thumbnail((1920, 1920)) 
+    img_io = io.BytesIO()
+    img.save(img_io, format=img.format or "JPEG", quality=85, optimize=True)
+    img_io.seek(0) 
+    contents = img_io.read() 
+
+    clean_filename = image.filename.replace(" ", "_") 
+    unique_filename = f"{user_id}_{clean_filename}"
+    #upload to supabase storage (profile-pictures) - wrap in try catch finally so that it doesnt update database when upload to storage fails 
+    upload = supabase.storage.from_("profile-pictures").upload(
+        unique_filename, 
+        contents, 
+        file_options={"content-type": image.content_type}
+    )
+    image_url = supabase.storage.from_("profile-pictures").get_public_url(unique_filename) 
+    
+    #update users row 
+    query = supabase.table("users").update({"pfp_url": image_url}).eq("user_id", user_id).execute()
+    updated_row = query.data[0] if query.data and len(query.data) > 0 else None
+
+    if not updated_row:                                                                                                                        
+        return {
+            "success": False, 
+            "message": "User not found"
+        }
+
+    return { 
+        "success": True, 
+        "updated_row": updated_row, 
+        "message": "Profile picture updated"
+    }
+
 
 @app.post("/images/upload")
-async def upload_image(image: UploadFile = File(...)):
+async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
     contents = await image.read()
 
     #compress img 
@@ -69,9 +114,6 @@ async def upload_image(image: UploadFile = File(...)):
     img_io.seek(0) 
     contents = img_io.read()  
 
-    #just autogenerate user id for now, need to be replace later with real user id from auth system
-    user_id = "cb27c878-b296-4b67-b782-006c6fae56b4"
-
     clean_filename = image.filename.replace(" ", "_") 
     unique_filename = f"{user_id}_{clean_filename}"
     #upload to supabase storage 
@@ -80,7 +122,6 @@ async def upload_image(image: UploadFile = File(...)):
         contents, 
         file_options={"content-type": image.content_type} 
     )
-
     image_url = supabase.storage.from_("images").get_public_url(unique_filename)
 
     #store in images table 

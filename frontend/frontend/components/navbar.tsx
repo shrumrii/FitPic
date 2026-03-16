@@ -1,17 +1,19 @@
 "use client"; 
-import Navbar from "@/components/navbar" 
-import Image from "next/image";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
 
-export default function Dashboard() {
-    
-    const router = useRouter(); 
+export default function Navbar() {
+
+    const [username, setUsername] = useState(""); 
     const [loading, setLoading] = useState(false); 
+    const [profilePic, setProfilePic] = useState<string | null>(null); 
+    const router = useRouter(); 
+    
 
     useEffect(() => { 
-        const ensureUserLogged = async () => { 
+        const getUsername = async () => { 
             
             setLoading(true); 
 
@@ -22,13 +24,11 @@ export default function Dashboard() {
                 
                 if (error) { 
                     console.log("Supabase auth error, redirecting to welcome page"); 
-                    router.push("/welcome"); 
                     return; 
                 }
 
                 if (!user) { 
                     console.log("User not found, redirecting to welcome page"); 
-                    router.push("/welcome"); 
                     return; 
                 }
                 
@@ -45,30 +45,39 @@ export default function Dashboard() {
                 if (!result.success) { 
                     console.log(result.message); 
                     console.log(`${user.id} has made an account, but has not created a profile. Redirecting to onboarding.`); 
-                    router.push("/onboarding"); 
                     return; 
                 }
 
+                setUsername(result.data.username); 
+                setProfilePic(result.data.pfp_url)
+
             } catch (error) { 
                 console.error("error", error); 
-                router.push("/welcome")
             } finally { 
                 setLoading(false); 
             }
         }
-        ensureUserLogged(); 
+        getUsername(); 
     }, [])
 
-    return (
-        <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
 
-            <Navbar/>
+    return (<nav className="w-full bg-white dark:bg-zinc-900 px-8 py-4 flex items-center justify-between"> 
+                <h1 className="text-amber-400 font-semibold text-xl"> FitPic </h1>
+                
+                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
+                    onClick={() => router.push("/upload")}> Upload FitPic
+                </button>  
+                
+                <div className="flex items-center gap-3">
+                    <span className="text-amber-400 font-semibold text-xl"> {loading ? "..." : username} </span>
+                    <div className="w-10 h-10 rounded-full overflow-hidden">
+                        {profilePic ? <Image src={profilePic} alt={username[0]} width={40} height={40}/> : 
+                        <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center font-semibold"> {username[0]?.toUpperCase()}</div>
+                        } 
+                    </div> 
+                </div> 
 
-            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        
+
                 
-                
-            </main>
-        </div>
-    ); 
-}
+            </nav>); 
+}   
