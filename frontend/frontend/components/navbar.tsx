@@ -65,17 +65,20 @@ export default function Navbar() {
     return (<nav className="w-full bg-white dark:bg-zinc-900 px-8 py-4 flex items-center justify-between"> 
                 <Link href="/dashboard"> <h1 className="text-amber-400 font-semibold text-xl"> FitPic </h1> </Link>
                 
-                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
-                    onClick={() => router.push("/upload")}> Upload FitPic
-                </button>  
-                
                 <div className="flex items-center gap-3">
+
+                    <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
+                        onClick={() => router.push("/upload")}> Upload FitPic
+                    </button>  
+
                     <span className="text-amber-400 font-semibold text-xl"> {username} </span>
+
                     <Link href="/profile"> <div className="w-10 h-10 rounded-full overflow-hidden">
                         {profilePic ? <Image src={profilePic} alt={username[0]} width={40} height={40}/> : 
                         <div className="w-10 h-10 rounded-full bg-amber-400 flex items-center justify-center font-semibold"> {username[0]?.toUpperCase()}</div>
                         } 
                     </div> </Link>
+                        
                 </div> 
 
 

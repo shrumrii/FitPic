@@ -37,7 +37,8 @@ TODO:
 
 DATABASE WORK: 
 - prevent data duplication 
-- handle row deletion 
+- handle row deletion (if user is deleted from supabase auth users table, we need to delete it from our own users table as well) 
+- if profile picture of a certain user edits it (replaces the old one), delete old one from s3 storage 
 
 FRONTEND DESIGN WORK: 
 - continue designing dashboard 

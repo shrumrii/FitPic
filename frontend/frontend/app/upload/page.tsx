@@ -3,6 +3,7 @@ import Image from "next/image";
 import { useState } from "react"; 
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import Navbar from "@/components/navbar";
 
 export default function UploadPage() {
   
@@ -61,7 +62,8 @@ export default function UploadPage() {
   }; 
   
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
+    <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
+      <Navbar/>
       <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
         <h1 className="text-5xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
           Upload Your Image
@@ -77,8 +79,9 @@ export default function UploadPage() {
         
 
           {/* upload button */}
-          <button onClick={handleUpload} disabled={!selectedFile || uploading}> 
-          {uploading ? "Uploading..." : "Upload"}
+          <button className="bg-black text-white rounded-lg px-6 py-3 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
+            onClick={handleUpload} disabled={!selectedFile || uploading}> 
+            {uploading ? "Uploading..." : "Upload"}
           </button>
 
           {/* see uploaded image */}
