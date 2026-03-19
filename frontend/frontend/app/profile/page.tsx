@@ -109,11 +109,16 @@ export default function Profile() {
         }
     }
 
+    //sign out handler 
+    const handleSignout = async () => { 
+        await supabase.auth.signOut(); 
+        router.push("/welcome"); 
+    }
+
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
             <Navbar/>
             <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black items:center">
-
 
                 <div className="flex flex-col gap-4">
 
@@ -140,13 +145,23 @@ export default function Profile() {
                         className="hidden"
                     />
 
-                    <button
-                        className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
-                        onClick={() => fileInputRef.current?.click()}
-                    >
-                        Edit profile picture
-                    </button>
+                    <div className="flex gap-3"> 
+                        <button
+                            className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                            onClick={() => fileInputRef.current?.click()}
+                        >
+                            Edit profile picture
+                        </button>
 
+                        <button
+                            className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                            onClick={handleSignout}
+                        >
+                            Sign out
+                        </button>
+
+                    </div>
+                    
                 </div>
             
                 {/* feed grid placeholder, show "No posts yet" text if user has no posts */}
@@ -160,7 +175,7 @@ export default function Profile() {
                     /* map posts */ 
                     <div className="grid grid-cols-3 gap-1 w-full mt-8">
                         {images.map((image) => (
-                            <div className="aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                            <div key={image.image_id} className="aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
                                 <Image src={image.url} alt="fit" fill className="object-cover" />
                             </div> 
                         ))}
