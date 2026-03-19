@@ -56,6 +56,22 @@ async def get_user(user_id: str):
             "message": "User not found."
         }
 
+#get all images from specific user 
+@app.get("/users/{user_id}/images")
+async def get_images(user_id: str):
+
+    #query, filter by user_id and fetch image id, url, created_at 
+    query = supabase.table("images").select("image_id, created_at, url").eq("user_id", user_id).order("created_at", desc=True).execute() 
+
+    print('hi') 
+    #return list of json objects with data (such as image url, etc.) 
+    #if empty, handle on frontend (user could have no posts) 
+    return { 
+        "success": True, 
+        "data": query.data
+    }
+
+
 @app.post("/users/{user_id}/pfp")
 async def upload_pfp(user_id: str, image: UploadFile = File(...)): 
     
@@ -100,7 +116,6 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
         "updated_row": updated_row, 
         "message": "Profile picture updated"
     }
-
 
 @app.post("/images/upload")
 async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):

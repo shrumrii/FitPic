@@ -13,10 +13,13 @@ export default function Profile() {
     const [loading, setLoading] = useState(false);
     const [profilePic, setProfilePic] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([])
     const router = useRouter();
+    
 
     useEffect(() => {
 
+        //load user profile 
         const getUserData = async () => {
             setLoading(true);
 
@@ -33,7 +36,6 @@ export default function Profile() {
                 const response = await fetch(`http://localhost:8000/users/${user.id}`);
 
                 if (!response.ok) {
-                    console.log(await response.text())
                     throw new Error("Failed to get user id");
                 }
 
@@ -49,19 +51,32 @@ export default function Profile() {
                 setAge(result.data.age);
                 setProfilePic(result.data.pfp_url);
                 setUserID(user.id);
+
+                //load images 
+                console.log(`fetching: http://localhost:8000/users/${user.id}/images`)
+                const imagesResponse = await fetch(`http://localhost:8000/users/${user.id}/images`); 
+
+                if (!imagesResponse.ok) {
+                    throw new Error("Failed to get user's images");
+                }
+
+                const imagesResult = await imagesResponse.json(); 
+                //console.log("IMAGES DATA"); 
+                //console.log(imagesResult.data); 
+
+                setImages(imagesResult.data); 
                 router.refresh()
 
             } catch (error) {
-                console.log("error");
+                console.error(error); 
             } finally {
                 setLoading(false);
             }
         }
         getUserData();
-
-
     }, []);
 
+    //update profile pic 
     const changeProfilePicture = async (file: File) => {
         try {
             const formData = new FormData();
@@ -96,47 +111,66 @@ export default function Profile() {
 
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
-                <Navbar/>
-                <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-between py-8 px-16 bg-white dark:bg-black items:center">
+            <Navbar/>
+            <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black items:center">
 
 
-                    <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-4">
 
-                        <div className="flex items-center gap-6">
+                    <div className="flex items-center gap-6">
 
-                            <div className="w-24 h-24 rounded-full overflow-hidden">
-                                {profilePic ? <Image src={profilePic} alt={username} width={96} height={96}/> :
-                                <div className="w-24 h-24 rounded-full bg-amber-400 flex items-center justify-center font-semibold"> {username[0]?.toUpperCase()}</div>
-                                }
-                            </div>
-
-                            <div className="flex flex-col gap-1">
-                                <p> {username} </p>
-                                <p> Age: {age} </p>
-                            </div>
-
+                        <div className="w-24 h-24 rounded-full overflow-hidden">
+                            {profilePic ? <Image src={profilePic} alt={username} width={96} height={96}/> :
+                            <div className="w-24 h-24 rounded-full bg-amber-400 flex items-center justify-center font-semibold"> {username[0]?.toUpperCase()}</div>
+                            }
                         </div>
 
-                        <input
-                            type="file"
-                            accept="image/jpeg,image/png,image/webp"
-                            ref={fileInputRef}
-                            onChange={handleFileChange}
-                            className="hidden"
-                        />
-
-                        <button
-                            className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            Edit profile picture
-                        </button>
+                        <div className="flex flex-col gap-1">
+                            <p> {username} </p>
+                            <p> Age: {age} </p>
+                        </div>
 
                     </div>
 
+                    <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        className="hidden"
+                    />
+
+                    <button
+                        className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                        onClick={() => fileInputRef.current?.click()}
+                    >
+                        Edit profile picture
+                    </button>
+
+                </div>
+            
+                {/* feed grid placeholder, show "No posts yet" text if user has no posts */}
+                {images.length === 0 ? 
+                    <div className="flex w-full items-center justify-center mt-16">
+                        <p className="text-zinc-400">No posts yet.</p>
+                    </div>
+                    
+                    : 
+                    
+                    /* map posts */ 
+                    <div className="grid grid-cols-3 gap-1 w-full mt-8">
+                        {images.map((image) => (
+                            <div className="aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                                <Image src={image.url} alt="fit" fill className="object-cover" />
+                            </div> 
+                        ))}
+                    </div>
+                }   
 
 
-                </main>
-         </div>
+                
+
+            </main>
+        </div>
     );
 }
