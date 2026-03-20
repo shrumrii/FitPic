@@ -4,6 +4,7 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
+import Spinner from "@/components/spinner"; 
 
 export default function Dashboard() {
     
@@ -58,6 +59,8 @@ export default function Dashboard() {
         }
         ensureUserLogged(); 
     }, [])
+
+    if (loading) return <Spinner/>; 
 
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">

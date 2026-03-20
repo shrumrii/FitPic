@@ -25,15 +25,30 @@ Run backend fastAPI: fastapi dev
 Run frontend Next.JS: npm run dev 
 Identify and kill port: kill -9 $(lsof -t -i :8000)
 
-TODO:
+Finished: 
+- Sign up page and onboarding (+associated routing) 
+- Created dashboard 
+- Created initial navbar 
+- Login and authentication (through supabase)  
+- Created images and users database 
+- Created images and profile pic images storage 
+- Created upload page 
+- Created profile page 
+- Created profile info + edit profile pic button 
+- Created initial images grid 
+- updated upload page.  
 - 
+
+TODO: 
 - refine the upload page
--  Set up user login and authentication system 
 -  AI model 
 - UI / page design 
-- API design 
 - handle database user deletes 
 - middleware for route protection
+- organizing folders a bit more (common libraries, organizing api endpoints, etc.)
+- edge case: show no posts if user has no posts 
+- verify JWTs in api endpoints 
+- server side auth validation 
 
 DATABASE WORK: 
 - prevent data duplication 
@@ -42,13 +57,17 @@ DATABASE WORK:
 
 FRONTEND DESIGN WORK: 
 - continue designing dashboard 
-- add profile picture to navbar 
-- dropdown from profile 
 
 BACKEND WORK: 
 - 
 - brainstorm AI model and how to implement 
 
+
+
+ALTER TABLE users
+ADD CONSTRAINT users_user_id_fkey                                                                                                          
+FOREIGN KEY (user_id) REFERENCES auth.users(id)                                                                                            
+ON DELETE CASCADE; 
 
 
 

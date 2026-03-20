@@ -81,8 +81,14 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
             "success": False, 
             "message": "Not a valid file type. Please use JPEG or PNG"
         }
-    contents = await image.read() 
+    
+    #check old pfp (if exists) 
+    old_pfp_filename = ""
+    pfp_check_query = supabase.table("users").select("pfp_url").eq("user_id", user_id).execute()
+    if pfp_check_query.data and pfp_check_query.data[0].get("pfp_url"): 
+        old_pfp_filename = pfp_check_query.data[0].get("pfp_url").split("/")[-1]
 
+    contents = await image.read() 
     #compress img 
     img = Image.open(io.BytesIO(contents))
     img.thumbnail((1920, 1920)) 
@@ -101,6 +107,11 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
     )
     image_url = supabase.storage.from_("profile-pictures").get_public_url(unique_filename) 
     
+    #upload successful, remove old pfp 
+    if old_pfp_filename: 
+        supabase.storage.from_("profile-pictures").remove([old_pfp_filename])
+
+
     #update users row 
     query = supabase.table("users").update({"pfp_url": image_url}).eq("user_id", user_id).execute()
     updated_row = query.data[0] if query.data and len(query.data) > 0 else None

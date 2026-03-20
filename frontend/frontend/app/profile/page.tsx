@@ -4,6 +4,8 @@ import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
+import Spinner from "@/components/spinner"; 
+
 
 export default function Profile() {
 
@@ -15,7 +17,6 @@ export default function Profile() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([])
     const router = useRouter();
-    
 
     useEffect(() => {
 
@@ -115,6 +116,8 @@ export default function Profile() {
         router.push("/welcome"); 
     }
 
+    if (loading) return <Spinner/>; 
+
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
             <Navbar/>
@@ -159,9 +162,7 @@ export default function Profile() {
                         >
                             Sign out
                         </button>
-
                     </div>
-                    
                 </div>
             
                 {/* feed grid placeholder, show "No posts yet" text if user has no posts */}
