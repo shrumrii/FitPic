@@ -37,7 +37,8 @@ Finished:
 - Created profile info + edit profile pic button 
 - Created initial images grid 
 - updated upload page.  
-- 
+- added functionality to delete old profiile pics if replaced 
+- added functionality where users also deletes row if user deletes account (a.k.a. row is deleted from supabase auth users table)
 
 TODO: 
 - refine the upload page
@@ -62,13 +63,23 @@ BACKEND WORK:
 - 
 - brainstorm AI model and how to implement 
 
+follows table:
+- PK is composite key (follower, follows)
 
 
+** setting cascade on users table so that when user row is deleted from supabase auth users table, its also deleted from OUR users table 
 ALTER TABLE users
 ADD CONSTRAINT users_user_id_fkey                                                                                                          
 FOREIGN KEY (user_id) REFERENCES auth.users(id)                                                                                            
 ON DELETE CASCADE; 
 
+** creating follows table, composite pk with follower_id + following_id, fk relation with follower_id, as well as adding cascade 
+CREATE TABLE follows (
+      follower_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      following_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      PRIMARY KEY (follower_id, following_id)
+  );
 
 
 

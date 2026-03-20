@@ -41,6 +41,18 @@ async def create_user(user: UserCreate):
         "message": f"User {user.username} created." 
     }
 
+@app.get("/users/search")
+async def search_username(username: str): 
+
+    #query supabase for username 
+    query = supabase.table("users").select("user_id, username").ilike("username", f"%{username}%").execute() 
+    users = query.data 
+
+    return { 
+        "success": True, 
+        "data": users 
+    }
+
 @app.get("/users/{user_id}")
 async def get_user(user_id: str):
     response = supabase.table("users").select("*").eq("user_id", user_id).execute() 
@@ -110,7 +122,6 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
     #upload successful, remove old pfp 
     if old_pfp_filename: 
         supabase.storage.from_("profile-pictures").remove([old_pfp_filename])
-
 
     #update users row 
     query = supabase.table("users").update({"pfp_url": image_url}).eq("user_id", user_id).execute()
