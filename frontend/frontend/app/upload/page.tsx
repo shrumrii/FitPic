@@ -98,7 +98,7 @@ export default function UploadPage() {
           )} 
 
           {/* upload button */}
-          <button className="bg-black text-white rounded-lg px-6 py-1 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50 disabled:hover:bg-black disabled:hover:text-white pointer-events-none disabled:cursor-not-allowed" 
+          <button className="bg-black text-white rounded-lg px-6 py-1 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50 disabled:hover:bg-black disabled:hover:text-white pointer-events-none " 
             onClick={handleUpload} disabled={!selectedFile || uploading || !!uploadedImage}> 
             {uploading ? "Uploading..." : "Upload"}
           </button>   

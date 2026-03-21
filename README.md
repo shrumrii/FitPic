@@ -39,22 +39,26 @@ Finished:
 - updated upload page.  
 - added functionality to delete old profiile pics if replaced 
 - added functionality where users also deletes row if user deletes account (a.k.a. row is deleted from supabase auth users table)
+- created friends table 
+- created friends page and search for user endpoint 
+- created get following endpoint 
+- created feed endpoint 
+
 
 TODO: 
-- refine the upload page
 -  AI model 
 - UI / page design 
-- handle database user deletes 
 - middleware for route protection
 - organizing folders a bit more (common libraries, organizing api endpoints, etc.)
 - edge case: show no posts if user has no posts 
 - verify JWTs in api endpoints 
 - server side auth validation 
+- need some work done on the find friends page 
+- real time notification for "friend request received" 
+- optimize feed endpoint 
 
 DATABASE WORK: 
 - prevent data duplication 
-- handle row deletion (if user is deleted from supabase auth users table, we need to delete it from our own users table as well) 
-- if profile picture of a certain user edits it (replaces the old one), delete old one from s3 storage 
 
 FRONTEND DESIGN WORK: 
 - continue designing dashboard 

@@ -9,9 +9,12 @@ export default function Friend() {
     const router = useRouter(); 
     const [loading, setLoading] = useState(false); 
     const [usernameSearchString, setUsernameSearchString] = useState(""); 
-    const [usernameList, setUsernameList] = useState<{user_id: string, username: string | null}[]>([]) 
+    const [usernameList, setUsernameList] = useState<{user_id: string, username: string | null}[]>([]); 
     const [searching, setSearching] = useState(false); 
     const [userID, setUserID] = useState(""); 
+    const [adding, setAdding] = useState(false); 
+    const [popupMessage, setPopupMessage] = useState("");  
+    const [followedList, setFollowedList] = useState<string[]>([]); 
 
     useEffect(() => { 
         const getUserID = async () => { 
@@ -68,7 +71,41 @@ export default function Friend() {
             setLoading(false); 
 
         }
-    
+    }
+
+    const addFriend = async (followingID: string) => { 
+        setAdding(true); 
+
+        try { 
+
+            const response = await fetch(`http://localhost:8000/users/${userID}/follow`, {
+                method: "POST", 
+                headers: { "Content-Type": "application/json" }, 
+                body: JSON.stringify({ following_id: followingID })
+            }); 
+
+            if (!response.ok) { 
+                console.log(await response.text()) 
+                throw new Error("error"); 
+            }
+
+            const result = await response.json(); 
+
+            //if log into database not successful, send popup msg 
+            if (!result.success) { 
+                console.log("Add friend not successful"); 
+            } else { 
+                console.log(`${result.data.following_id} successfully added`); 
+                if (!followedList.includes(result.data.following_id)) { 
+                    setFollowedList([...followedList, result.data.following_id]) 
+                }
+            }
+
+        } catch (error) { 
+            console.error(error); 
+        } finally { 
+            setAdding(false); 
+        }
     }
 
     return (
@@ -106,8 +143,9 @@ export default function Friend() {
                         {usernameList.map((username) => (
                             <div key={username.user_id} className="flex items-center justify-between w-full">
                                 <p> {username.username} </p>
-                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50">
-                                    Add friend
+                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                                    onClick={() => addFriend(username.user_id)}>
+                                    {followedList.includes(username.user_id) ? "Added" : "Add Friend"}
                                 </button>
                             </div> 
 

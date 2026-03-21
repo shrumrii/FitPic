@@ -139,6 +139,78 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
         "message": "Profile picture updated"
     }
 
+class AddFollower(BaseModel): #modify as needed when i change the users table schema 
+        following_id: str
+
+@app.post("/users/{follower_id}/follow")
+async def add_follower(follower_id: str, following: AddFollower): 
+
+    data = { 
+        "follower_id": follower_id, 
+        "following_id": following.following_id
+    }
+
+    #add to follows table 
+    response = supabase.table("follows").insert(data).execute() 
+    inserted_row = response.data[0] if response.data and len(response.data) > 0 else None
+
+    if not inserted_row: 
+        return { 
+            "success": False, 
+            "message": "Failed to add row to follows database"
+        }
+    
+    return { 
+        "success": True, 
+        "data": inserted_row
+    }
+
+#get list of followers of user 
+@app.get("/users/{user_id}/following")
+async def get_following(user_id: str): 
+
+    query = supabase.table("follows").select("following_id").eq("follower_id", user_id).execute() 
+    following = query.data 
+
+    return {
+        "success": True, 
+        "data": following
+    }
+
+#get user feed, essentially combine /following and /images endpoints 
+@app.get("/users/{user_id}/feed")
+async def get_feed(user_id: str):
+
+    feed_list = [] 
+    try: 
+        #get following 
+        query = supabase.table("follows").select("following_id").eq("follower_id", user_id).execute() 
+        following = query.data 
+
+        for item in following: 
+            following_id = item["following_id"]
+
+            query = supabase.table("images").select("image_id, created_at, url").eq("user_id", following_id).order("created_at", desc=True).execute() 
+            images = query.data
+            for image in images: 
+                image_dict = {"user_id": following_id, "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
+                feed_list.append(image_dict) 
+
+        #sort by most recent across all friends 
+        feed_list.sort(key=lambda x: x["created_at"], reverse=True)
+        
+        return { 
+            "success": True, 
+            "data": feed_list
+        }
+    except Exception as e: 
+        return { 
+            "success": False, 
+            "message": str(e) 
+        }
+
+        
+
 @app.post("/images/upload")
 async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
     contents = await image.read()
@@ -180,5 +252,13 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         "data": inserted_row, 
         "message": f"Image {image.filename} uploaded."
     }
+
+
+
+
+
+
+
+
 
 
