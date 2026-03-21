@@ -1,7 +1,7 @@
 "use client";
 import { useRouter } from "next/navigation";
-import supabase from "@/lib/supabase";
 import { useState } from "react";
+import { getUser } from "@/lib/getUser";
 
 export default function Onboarding() {
 
@@ -46,21 +46,13 @@ export default function Onboarding() {
 
         try { 
             
-            //get current user from supabase auth
-            const { data: { user }, error } = await supabase.auth.getUser(); 
-            console.log("data", user); 
-
-            if (error) {
-                console.error("Failure to retrieve user from supabase auth", error);
-                throw new Error("Failed to retrieve user from supabase auth");
-            }
-
-            //redirect to signup if no user 
-            if (!user) { 
-                console.log("No user found, redirect to signup page"); 
-                router.push("/signup"); //idk if this is right... 
-                return;
-            }
+            //get user 
+            const user = await getUser(); 
+                if (user == null) { 
+                    console.log("Redirect to welcome page"); 
+                    router.push("/welcome"); 
+                    return; 
+                }
 
             //combine with form data and send to backend 
             const response = await fetch("http://localhost:8000/users/create", { 

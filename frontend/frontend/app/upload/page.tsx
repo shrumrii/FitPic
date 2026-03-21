@@ -1,9 +1,9 @@
 "use client"; 
 import Image from "next/image";
-import { useState, useRef } from "react"; 
-import supabase from "@/lib/supabase";
+import { useState, useEffect, useRef } from "react"; 
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
+import { getUser } from "@/lib/getUser"; 
 
 export default function UploadPage() {
   
@@ -12,8 +12,31 @@ export default function UploadPage() {
   const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);  
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [successMessage, setSuccessMessage] = useState(""); 
+  const [userID, setUserID] = useState(""); 
   const router = useRouter(); 
   
+  useEffect(() => { 
+    const getUserID = async () => { 
+        
+        try { 
+            
+            const user = await getUser(); 
+
+            if (user == null) { 
+                console.log("Redirect to welcome page"); 
+                router.push("/welcome"); 
+                return; 
+            }
+            
+            setUserID(user.id); 
+
+        } catch (error) { 
+            console.error(error); 
+        }
+    }
+    getUserID(); 
+  }, [])
+
   const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       setSelectedFile(e.target.files[0]);
@@ -31,15 +54,8 @@ export default function UploadPage() {
     
     //response 
     try { 
-      const { data: { user }, error } = await supabase.auth.getUser(); 
 
-      if (!user) { 
-        console.log('User does not exist.');
-        router.push("/welcome");  
-        return; 
-      }
-
-      formData.append("user_id", user.id); 
+      formData.append("user_id", userID); 
 
       const response = await fetch("http://localhost:8000/images/upload", {
         method: "POST", 

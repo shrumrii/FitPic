@@ -2,7 +2,8 @@
 import Navbar from "@/components/navbar" 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import supabase from "@/lib/supabase";
+import { getUser } from "@/lib/getUser"; 
+
 
 export default function Friend() {
     
@@ -22,20 +23,14 @@ export default function Friend() {
             setLoading(true); 
             try { 
                 
-                const { data: { user }, error } = await supabase.auth.getUser(); 
-                console.log("data", user); 
-                
-                if (error) { 
-                    console.log("Supabase auth error, redirecting to welcome page"); 
-                    router.push("/welcome"); 
-                    return; 
-                }
+                const user = await getUser(); 
 
-                if (!user) { 
-                    console.log("User not found, redirecting to welcome page"); 
+                if (user == null) { 
+                    console.log("Redirect to welcome page"); 
                     router.push("/welcome"); 
                     return; 
                 }
+                
                 setUserID(user.id); 
 
             } catch (error) { 

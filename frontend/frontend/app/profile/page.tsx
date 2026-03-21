@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
 import Spinner from "@/components/spinner"; 
+import { getUser } from "@/lib/getUser"; 
 
 
 export default function Profile() {
@@ -21,17 +22,16 @@ export default function Profile() {
     useEffect(() => {
 
         //load user profile 
-        const getUserData = async () => {
+        const getProfileInfo = async () => {
             setLoading(true);
 
             try {
 
-                const { data: { user }, error } = await supabase.auth.getUser();
-
-                if (!user) {
-                    console.log("User not found, redirecting to welcome page");
-                    router.push("/welcome");
-                    return;
+                const user = await getUser(); 
+                if (user == null) { 
+                    console.log("Redirect to welcome page"); 
+                    router.push("/welcome"); 
+                    return; 
                 }
 
                 const response = await fetch(`http://localhost:8000/users/${user.id}`);
@@ -66,7 +66,6 @@ export default function Profile() {
                 //console.log(imagesResult.data); 
 
                 setImages(imagesResult.data); 
-                router.refresh()
 
             } catch (error) {
                 console.error(error); 
@@ -74,7 +73,7 @@ export default function Profile() {
                 setLoading(false);
             }
         }
-        getUserData();
+        getProfileInfo();
     }, []);
 
     //update profile pic 
