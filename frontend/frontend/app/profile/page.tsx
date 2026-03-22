@@ -16,7 +16,7 @@ export default function Profile() {
     const [loading, setLoading] = useState(false);
     const [profilePic, setProfilePic] = useState<string | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([])
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]); 
     const router = useRouter();
 
     useEffect(() => {
@@ -120,7 +120,7 @@ export default function Profile() {
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
             <Navbar/>
-            <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black items:center">
+            <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black">
 
                 <div className="flex flex-col gap-4">
 
