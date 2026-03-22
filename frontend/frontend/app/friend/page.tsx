@@ -107,7 +107,7 @@ export default function Friend() {
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
             <Navbar/>
             <main className="flex min-h-screen mx-auto w-full flex-col items-center justify-start py-32 px-16 bg-white dark:bg-black">
-                <h1 className="text-5xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
+                <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
                     Find a friend
                 </h1>
 
