@@ -43,6 +43,9 @@ Finished:
 - created friends page and search for user endpoint 
 - created get following endpoint 
 - created feed endpoint 
+- create feed modals 
+- show "following" if already followed in friend search 
+- created userContext
 
 
 TODO: 
@@ -53,12 +56,18 @@ TODO:
 - edge case: show no posts if user has no posts 
 - verify JWTs in api endpoints 
 - server side auth validation 
-- need some work done on the find friends page 
 - real time notification for "friend request received" 
 - optimize feed endpoint 
 - add forgot password 
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
-- Remove picture
+- Remove picture option 
+- add modal for the profile page too 
+- create sidebar
+- clean up code 
+- turn image grid and modal into components 
+- create friends page. follow button can turn into modal as well 
+- use react shared context for sidebar/navbar/page
+- refactor pages with user context 
 
 DATABASE WORK: 
 - prevent data duplication 
