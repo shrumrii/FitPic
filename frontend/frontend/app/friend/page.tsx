@@ -17,6 +17,7 @@ export default function Friend() {
     const [popupMessage, setPopupMessage] = useState("");  
     const [followedList, setFollowedList] = useState<string[]>([]); 
 
+
     useEffect(() => { 
         const getUserID = async () => { 
             
@@ -140,7 +141,7 @@ export default function Friend() {
                                 <p> {username.username} </p>
                                 <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
                                     onClick={() => addFriend(username.user_id)}>
-                                    {followedList.includes(username.user_id) ? "Added" : "Add Friend"}
+                                    {followedList.includes(username.user_id) ? "Following" : "Follow"}
                                 </button>
                             </div> 
 

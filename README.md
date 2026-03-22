@@ -56,6 +56,8 @@ TODO:
 - need some work done on the find friends page 
 - real time notification for "friend request received" 
 - optimize feed endpoint 
+- add forgot password 
+- 
 
 DATABASE WORK: 
 - prevent data duplication 

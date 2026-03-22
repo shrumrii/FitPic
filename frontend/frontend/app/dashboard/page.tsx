@@ -11,11 +11,10 @@ export default function Dashboard() {
     const router = useRouter(); 
     const [loading, setLoading] = useState(false);  
     const [feed, setFeed] = useState<{user_id: string, image_id: string, url: string, created_at: string}[]>([]); 
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, image_id: string, url: string, created_at: string} | null>(null);
 
     useEffect(() => { 
         const getUserFeed = async (id: string) => { 
-
-            setLoading(true);
 
             try { 
 
@@ -73,7 +72,7 @@ export default function Dashboard() {
                     return; 
                 }
                 
-                getUserFeed(user.id);
+                await getUserFeed(user.id);
 
             } catch (error) { 
                 console.error("error", error); 
@@ -94,6 +93,7 @@ export default function Dashboard() {
                 <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
                     My Feed
                 </h1>
+ 
 
                 {
                     feed.length === 0 ? 
@@ -106,12 +106,29 @@ export default function Dashboard() {
                         /* map posts */ 
                         <div className="grid grid-cols-3 gap-1 w-full mt-8">
                             {feed.map((image) => (
-                                <div key={image.image_id} className="aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                                <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
                                     <Image src={image.url} alt="fit" fill className="object-cover" />
                                 </div> 
                             ))}
                         </div>
+                }
 
+                {/* modal */}
+                {selectedImage && (
+                    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={() => setSelectedImage(null)}> 
+                        
+                        <div className="bg-white flex flex-row rounded-xl overflow-hidden max-w-lg w-full mx-4 max-w-4xl" onClick={e => e.stopPropagation()}>
+                            <div className="relative aspect-square w-2/3">
+                                <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+                            </div>
+
+                            <div className="bg-white flex flex-col items-center justify-center text-black w-1/3"> 
+                                <p> {selectedImage.user_id} </p>
+                            </div> 
+                            
+                
+                        </div>
+                    </div>)
                 }
 
             </main>
