@@ -68,7 +68,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3">
 
                     <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
-                        onClick={() => router.push("/friend")}> Find Friends
+                        onClick={() => router.push("/friend")}> Follow Friends
                     </button> 
 
                     <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 

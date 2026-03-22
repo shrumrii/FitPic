@@ -165,11 +165,12 @@ async def add_follower(follower_id: str, following: AddFollower):
         "data": inserted_row
     }
 
-#get list of followers of user 
+#get list of following
 @app.get("/users/{user_id}/following")
 async def get_following(user_id: str): 
 
-    query = supabase.table("follows").select("following_id").eq("follower_id", user_id).execute() 
+    #joining users and follows table to get username based on following_id 
+    query = supabase.table("follows").select("following_id, users!follows_following_id_fkey(username)").eq("follower_id", user_id).execute() 
     following = query.data 
 
     return {
@@ -198,7 +199,7 @@ async def get_feed(user_id: str):
 
         #sort by most recent across all friends 
         feed_list.sort(key=lambda x: x["created_at"], reverse=True)
-        
+
         return { 
             "success": True, 
             "data": feed_list

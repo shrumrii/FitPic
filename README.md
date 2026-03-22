@@ -57,7 +57,8 @@ TODO:
 - real time notification for "friend request received" 
 - optimize feed endpoint 
 - add forgot password 
-- 
+- addd error handle for every post method in backend where a duplicate is a concern (follows) 
+- Remove picture
 
 DATABASE WORK: 
 - prevent data duplication 

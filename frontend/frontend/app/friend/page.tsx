@@ -19,7 +19,7 @@ export default function Friend() {
 
 
     useEffect(() => { 
-        const getUserID = async () => { 
+        const populateFriendPage = async () => { 
             
             setLoading(true); 
             try { 
@@ -34,13 +34,26 @@ export default function Friend() {
                 
                 setUserID(user.id); 
 
+                const response = await fetch(`http://localhost:8000/users/${user.id}/following`); 
+
+                if (!response.ok) { 
+                    console.log(await response.text()) 
+                    throw new Error("error"); 
+                }
+
+                const result = await response.json(); 
+
+                //map followedList to just be a list of following ids 
+                setFollowedList(result.data.map((item: {following_id: string}) => item.following_id)); 
+
+                
             } catch (error) { 
                 console.error(error); 
             } finally { 
                 setLoading(false); 
             }
         }
-        getUserID(); 
+        populateFriendPage(); 
     }, [])
 
     //when user clicks 
@@ -92,6 +105,7 @@ export default function Friend() {
                 console.log("Add friend not successful"); 
             } else { 
                 console.log(`${result.data.following_id} successfully added`); 
+                //add to the followedList state if clicked (and doesnt exist in state already)
                 if (!followedList.includes(result.data.following_id)) { 
                     setFollowedList([...followedList, result.data.following_id]) 
                 }
@@ -109,7 +123,7 @@ export default function Friend() {
             <Navbar/>
             <main className="flex min-h-screen mx-auto w-full flex-col items-center justify-start py-32 px-16 bg-white dark:bg-black">
                 <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
-                    Find a friend
+                    Follow a friend
                 </h1>
 
                 <input 
@@ -140,6 +154,7 @@ export default function Friend() {
                             <div key={username.user_id} className="flex items-center justify-between w-full">
                                 <p> {username.username} </p>
                                 <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                                    disabled={followedList.includes(username.user_id)}
                                     onClick={() => addFriend(username.user_id)}>
                                     {followedList.includes(username.user_id) ? "Following" : "Follow"}
                                 </button>
