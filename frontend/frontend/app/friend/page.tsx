@@ -153,7 +153,7 @@ export default function Friend() {
                         {usernameList.map((username) => (
                             <div key={username.user_id} className="flex items-center justify-between w-full">
                                 <p> {username.username} </p>
-                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                                <button className="bg-black text-white rounded-lg px-6 py-3 enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
                                     disabled={followedList.includes(username.user_id)}
                                     onClick={() => addFriend(username.user_id)}>
                                     {followedList.includes(username.user_id) ? "Following" : "Follow"}
