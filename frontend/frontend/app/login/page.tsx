@@ -1,81 +1,87 @@
-"use client";  
+"use client";
 import { useState } from "react";
-import supabase from "@/lib/supabase" 
-import { useRouter } from "next/navigation"
+import supabase from "@/lib/supabase";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 export default function Login() {
 
     const [formData, setFormData] = useState({ email: "", password: "" }); //const [email, setEmail] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const [error, setError] = useState(""); 
+    const [error, setError] = useState("");
     const router = useRouter();
 
     const setEmailPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-        const { name, value } = e.target; 
+        const { name, value } = e.target;
         setFormData(prev => ({ ...prev, [name]: value })); //keep previous form data, but update wtvr field that changed
-    } 
+    }
 
-    const handleLogin = async () => { 
+    const handleLogin = async () => {
         setLoading(true);
         setError("");
 
-        //empty fields 
+        //empty fields
         if (!formData.email || !formData.password) {
             setError("Please fill in all fields");
-            setLoading(false); 
+            setLoading(false);
             return;
         }
 
-        try { 
-            //supabase 
-            const { data, error } = await supabase.auth.signInWithPassword({ email:formData.email, password:formData.password })
+        try {
+            //supabase
+            const { data, error } = await supabase.auth.signInWithPassword({ email: formData.email, password: formData.password })
 
             if (error) {  //supabase error
-                console.error(error.message); 
+                console.error(error.message);
                 setError(error.message);
                 return
             }
-            
-            router.push("/"); //redirect to root 
 
-        } catch (error) { 
-            console.error("Login failed", error); 
-        } finally { 
-            setLoading(false); 
+            router.push("/"); //redirect to root
+
+        } catch (error) {
+            console.error("Login failed", error);
+        } finally {
+            setLoading(false);
         }
-
     }
 
     return (
-        <div className="flex min-h-screen items-center justify-center bg-zinc-100 font-sans dark:bg-black">
-            <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black">
-                <div className="flex flex-col items-center gap-6 text-center">
-                    <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-                    Log in to FitPic 
+        <div className="min-h-screen flex items-center justify-center bg-white dark:bg-black px-6">
+            <main className="w-full max-w-sm flex flex-col gap-8">
+                <div className="text-center">
+                    <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white">
+                        Log in to FitPic
                     </h1>
-                </div> 
+                </div>
 
-                <div className="flex flex-col items-center gap-6 text-center">
-                    <form className="flex flex-col gap-3 w-full"> 
-                        <input className="border border-zinc-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-amber-400 transition-colors dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                <div className="flex flex-col gap-4">
+                    <form className="flex flex-col gap-3">
+                        <input className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2.5 w-full text-sm focus:outline-none focus:border-amber-400 transition-colors dark:bg-zinc-900 dark:text-white"
                             type="email"
                             name="email"
                             placeholder="Email"
-                            onChange={setEmailPassword}/>
-                        <input className="border border-zinc-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:border-amber-400 transition-colors dark:border-zinc-600 dark:bg-zinc-900 dark:text-white"
+                            onChange={setEmailPassword} />
+                        <input className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2.5 w-full text-sm focus:outline-none focus:border-amber-400 transition-colors dark:bg-zinc-900 dark:text-white"
                             type="password"
                             name="password"
                             placeholder="Password"
-                            onChange={setEmailPassword}/>
-                    </form> 
+                            onChange={setEmailPassword} />
+                    </form>
 
-                    <p className="text-sm text-red-500">{error}</p>
-                
-                    <button className="bg-black text-white rounded-lg px-6 py-3 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
-                        onClick={handleLogin} disabled={loading}> {loading ? "Logging in..." : "Log in"} 
+                    {error && <p className="text-xs text-red-500">{error}</p>}
+
+                    <button className="bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                        onClick={handleLogin} disabled={loading}>
+                        {loading ? "Logging in..." : "Log in"}
                     </button>
+
+                    <p className="text-center text-sm text-zinc-500">
+                        Don&apos;t have an account?{" "}
+                        <Link href="/signup" className="text-black dark:text-white font-medium hover:text-amber-400 transition-colors">Sign up</Link>
+                    </p>
                 </div>
-            </main> 
+            </main>
         </div>
-    ); 
+    );
 }

@@ -1,127 +1,136 @@
-"use client"; 
+"use client";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react"; 
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
-import { getUser } from "@/lib/getUser"; 
+import { getUser } from "@/lib/getUser";
 
 export default function UploadPage() {
-  
-  const [selectedFile, setSelectedFile] = useState<File | null>(null); //typescript generic, initially null, but HAS TO be a File object when a file is selected
-  const [uploading, setUploading] = useState(false); 
-  const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);  
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [successMessage, setSuccessMessage] = useState(""); 
-  const [userID, setUserID] = useState(""); 
-  const router = useRouter(); 
-  
-  useEffect(() => { 
-    const getUserID = async () => { 
-        
-        try { 
-            
-            const user = await getUser(); 
 
-            if (user == null) { 
-                console.log("Redirect to welcome page"); 
-                router.push("/welcome"); 
-                return; 
+    const [selectedFile, setSelectedFile] = useState<File | null>(null); //typescript generic, initially null, but HAS TO be a File object when a file is selected
+    const [uploading, setUploading] = useState(false);
+    const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [successMessage, setSuccessMessage] = useState("");
+    const [userID, setUserID] = useState("");
+    const router = useRouter();
+
+    useEffect(() => {
+        const getUserID = async () => {
+
+            try {
+
+                const user = await getUser();
+
+                if (user == null) {
+                    console.log("Redirect to welcome page");
+                    router.push("/welcome");
+                    return;
+                }
+
+                setUserID(user.id);
+
+            } catch (error) {
+                console.error(error);
             }
-            
-            setUserID(user.id); 
-
-        } catch (error) { 
-            console.error(error); 
         }
-    }
-    getUserID(); 
-  }, [])
+        getUserID();
+    }, [])
 
-  const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setSelectedFile(e.target.files[0]);
-    }
-  };
+    const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && e.target.files.length > 0) {
+            setSelectedFile(e.target.files[0]);
+        }
+    };
 
-  const handleUpload = async () => {
-    if (!selectedFile) return; 
-    setUploading(true);
-    setSuccessMessage(""); 
-  
-    const formData = new FormData(); 
-    formData.append("image", selectedFile);
-    
-    
-    //response 
-    try { 
+    const handleUpload = async () => {
+        if (!selectedFile) return;
+        setUploading(true);
+        setSuccessMessage("");
 
-      formData.append("user_id", userID); 
+        const formData = new FormData();
+        formData.append("image", selectedFile);
 
-      const response = await fetch("http://localhost:8000/images/upload", {
-        method: "POST", 
-        body: formData
-      })
+        //response
+        try {
 
-      if (!response.ok) { //server 
-        console.log(await response.text())  
-        throw new Error("Upload failed"); 
-      }
+            formData.append("user_id", userID);
 
-      const result = await response.json(); //backend check
-      if (result.success) { 
-        setUploadedImage(result.data); 
-        setSuccessMessage("Successfully uploaded!"); 
-      } 
+            const response = await fetch("http://localhost:8000/images/upload", {
+                method: "POST",
+                body: formData
+            })
 
-    } catch (error) { 
-      console.error("Upload failed", error);
-      alert("Upload failed. Please try again."); 
-    } finally { 
-      setUploading(false); 
-    }
-  }; 
-  
-  return (
-    <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
-      <Navbar/>
-      <main className="flex min-h-screen mx-auto w-full flex-col items-center justify-start py-32 px-16 bg-white dark:bg-black">
-        <h1 className="text-5xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
-          Upload Your FitPic
-        </h1>
+            if (!response.ok) { //server
+                console.log(await response.text())
+                throw new Error("Upload failed");
+            }
 
-        <div className="flex flex-col items-center gap-3 mt-8 text-center sm:text-left">
-          {/* file input */}
-          <input 
-            type="file"
-            accept="image/jpeg,image/png,image/webp" 
-            ref={fileInputRef}
-            onChange={fileChange} 
-            className="hidden" 
-          />
+            const result = await response.json(); //backend check
+            if (result.success) {
+                setUploadedImage(result.data);
+                setSuccessMessage("Successfully uploaded!");
+            }
 
-          {/* input button */} 
-          <button className="bg-black text-white rounded-lg px-6 py-3 w-full hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
-            onClick={() => fileInputRef.current?.click()}> 
-            Choose File
-          </button>
-          <p> {selectedFile ? selectedFile.name : "No file chosen"} </p>
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Upload failed. Please try again.");
+        } finally {
+            setUploading(false);
+        }
+    };
 
-          {/* see image preview */}
-          {selectedFile && (
-            <div className="mt-2 rounded-xl overflow-hidden shadow-md">
-              <Image src={URL.createObjectURL(selectedFile)} alt="preview" width={400} height={400} /> 
-            </div>
-          )} 
+    return (
+        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
+            <Navbar/>
+            <main className="w-full max-w-sm mx-auto px-6 py-8">
+                <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
+                    Upload a FitPic
+                </h1>
 
-          {/* upload button */}
-          <button className="bg-black text-white rounded-lg px-6 py-1 w-full enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50" 
-            onClick={handleUpload} disabled={!selectedFile || uploading || !!uploadedImage}> 
-            {uploading ? "Uploading..." : "Upload"}
-          </button>   
+                {/* hidden file input */}
+                <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    ref={fileInputRef}
+                    onChange={fileChange}
+                    className="hidden"
+                />
 
-          <p> {successMessage} </p>
-        </div> 
-      </main>
-    </div>
-  );
-} 
+                {/* upload zone */}
+                <div
+                    className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-4 py-14 px-6 cursor-pointer hover:border-amber-400 transition-colors"
+                    onClick={() => fileInputRef.current?.click()}
+                >
+                    {selectedFile ? (
+                        <div className="flex flex-col items-center gap-3 w-full">
+                            <div className="rounded-lg overflow-hidden w-full">
+                                <Image src={URL.createObjectURL(selectedFile)} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
+                            </div>
+                            <p className="text-sm text-zinc-500">{selectedFile.name}</p>
+                        </div>
+                    ) : (
+                        <>
+                            <p className="text-zinc-400 text-sm text-center">Click to choose a photo</p>
+                            <p className="text-zinc-300 dark:text-zinc-600 text-xs">JPG, PNG, or WebP</p>
+                        </>
+                    )}
+                </div>
+
+                {selectedFile && (
+                    <button
+                        className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                        onClick={handleUpload}
+                        disabled={!selectedFile || uploading || !!uploadedImage}
+                    >
+                        {uploading ? "Uploading..." : "Upload"}
+                    </button>
+                )}
+
+                {successMessage && (
+                    <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
+                )}
+            </main>
+        </div>
+    );
+}

@@ -4,9 +4,9 @@ import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
-import Spinner from "@/components/spinner"; 
+import Spinner from "@/components/spinner";
 import { useUser } from "@/context/userContext";
-import Modal from "@/components/modal"; 
+import Modal from "@/components/modal";
 
 
 export default function Profile() {
@@ -14,53 +14,50 @@ export default function Profile() {
     const { username, user_id, profilePic, loading, age, refreshUser } = useUser() ?? { username: "", user_id: "", profilePic: null, loading: false, age: "", refreshUser: () => {}};
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]); 
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]);
     const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
     const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
     const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string} | null>(null);
-    const [followingModal, setFollowingModal] = useState(false); 
-    const [followerModal, setFollowerModal] = useState(false); 
-    
+    const [followingModal, setFollowingModal] = useState(false);
+    const [followerModal, setFollowerModal] = useState(false);
+
     const router = useRouter();
 
     useEffect(() => {
 
-        //load user profile 
+        //load user profile
         const getProfileInfo = async () => {
-      
+
             if (user_id == "") return;
 
-            if (user_id == "" && loading == false) { 
-                console.log("No user info found, redirecting to welcome page"); 
-                router.push("/welcome"); 
-                return; 
+            if (user_id == "" && loading == false) {
+                console.log("No user info found, redirecting to welcome page");
+                router.push("/welcome");
+                return;
             }
 
             try {
 
-                //load images 
+                //load images
                 console.log(`fetching: http://localhost:8000/users/${user_id}/images`)
-                const imagesResponse = await fetch(`http://localhost:8000/users/${user_id}/images`); 
+                const imagesResponse = await fetch(`http://localhost:8000/users/${user_id}/images`);
 
                 if (!imagesResponse.ok) {
                     console.log(imagesResponse.status)
                     throw new Error("Failed to get user's images");
                 }
 
-                const imagesResult = await imagesResponse.json(); 
-                //console.log("IMAGES DATA"); 
-                //console.log(imagesResult.data); 
-
-                setImages(imagesResult.data); 
+                const imagesResult = await imagesResponse.json();
+                setImages(imagesResult.data);
 
             } catch (error) {
-                console.error(error); 
-            } 
+                console.error(error);
+            }
         }
         getProfileInfo();
     }, [loading, user_id]);
 
-    //update profile pic 
+    //update profile pic
     const changeProfilePicture = async (file: File) => {
         try {
             const formData = new FormData();
@@ -78,7 +75,7 @@ export default function Profile() {
 
             const result = await response.json();
             if (result.success) {
-                refreshUser(); 
+                refreshUser();
             }
 
         } catch (error) {
@@ -93,171 +90,189 @@ export default function Profile() {
         }
     }
 
-    //sign out handler 
-    const handleSignout = async () => { 
-        await supabase.auth.signOut(); 
-        router.push("/welcome"); 
+    //sign out handler
+    const handleSignout = async () => {
+        await supabase.auth.signOut();
+        router.push("/welcome");
     }
 
-    const getFollowing = async () => { 
-        try { 
-            const response = await fetch(`http://localhost:8000/users/${user_id}/following`); 
+    const getFollowing = async () => {
+        try {
+            const response = await fetch(`http://localhost:8000/users/${user_id}/following`);
 
-            if (!response.ok) { 
+            if (!response.ok) {
                 console.error("Could not get following");
                 throw new Error("Could not get following");
             }
 
-            const result = await response.json();  
-            
+            const result = await response.json();
+
             setFollowingList(result.data.map((item: any) => ({
-                following_id: item.following_id,                                                                                                       
-                username: item.users.username                                                                                                          
-            })));  
-            setFollowingModal(true); 
-        
-        } catch (error) { 
-            console.error(error); 
-        } 
+                following_id: item.following_id,
+                username: item.users.username
+            })));
+            setFollowingModal(true);
+
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    const getFollowers = async () => { 
-        try { 
-            const response = await fetch(`http://localhost:8000/users/${user_id}/followers`); 
+    const getFollowers = async () => {
+        try {
+            const response = await fetch(`http://localhost:8000/users/${user_id}/followers`);
 
-            if (!response.ok) { 
+            if (!response.ok) {
                 console.error("Could not get followers");
                 throw new Error("Could not get followers");
             }
 
-            const result = await response.json(); 
-            
+            const result = await response.json();
+
             setFollowerList(result.data.map((item: any) => ({
-                follower_id: item.follower_id,                                                                                                       
-                username: item.users.username                                                                                                          
-            })));  
-            setFollowerModal(true); 
-        
-        } catch (error) { 
-            console.error(error); 
-        } 
+                follower_id: item.follower_id,
+                username: item.users.username
+            })));
+            setFollowerModal(true);
+
+        } catch (error) {
+            console.error(error);
+        }
     }
 
-    if (loading) return <Spinner/>; 
+    if (loading) return <Spinner/>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
+        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
             <Navbar/>
-            <main className="flex min-h-screen w-full max-w-4xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black">
+            <main className="w-full max-w-4xl mx-auto px-6 py-8">
 
-                <div className="flex flex-col gap-4">
+                {/* profile header */}
+                <div className="flex items-center gap-6 mb-8">
 
-                    <div className="flex items-center gap-6">
+                    {/* avatar */}
+                    <div className="w-20 h-20 rounded-full overflow-hidden flex-shrink-0">
+                        {profilePic
+                            ? <Image src={profilePic} alt={username} width={80} height={80} className="object-cover w-full h-full"/>
+                            : <div className="w-20 h-20 rounded-full bg-amber-400 flex items-center justify-center text-lg font-semibold">{username[0]?.toUpperCase()}</div>
+                        }
+                    </div>
 
-                        <div className="w-24 h-24 rounded-full overflow-hidden">
-                            {profilePic ? <Image src={profilePic} alt={username} width={96} height={96}/> :
-                            <div className="w-24 h-24 rounded-full bg-amber-400 flex items-center justify-center font-semibold"> {username[0]?.toUpperCase()}</div>
-                            }
+                    {/* info */}
+                    <div className="flex flex-col gap-3">
+                        <div className="flex items-baseline gap-3">
+                            <p className="text-lg font-semibold text-black dark:text-white">{username}</p>
+                            {age && <p className="text-sm text-zinc-400">Age {age}</p>}
                         </div>
 
-
-                        <div className="flex flex-col gap-1">
-                            <div className="flex flex-row gap-2">
-                                <p> {username} </p>
-                                <p> Age: {age} </p>
-                            </div>
-                            
-                            <div className="flex flex-row gap-2">
-                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
-                                    onClick={getFollowers}> 
-                                    Followers
-                                </button> 
-                                
-                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
-                                    onClick={getFollowing}> 
-                                    Following
-                                </button> 
-                            </div>
-
-
+                        <div className="flex gap-4">
+                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-amber-400 transition-colors font-medium" onClick={getFollowers}>
+                                Followers
+                            </button>
+                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-amber-400 transition-colors font-medium" onClick={getFollowing}>
+                                Following
+                            </button>
                         </div>
                     </div>
 
-                    <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        className="hidden"
-                    />
-
-                    <div className="flex gap-3"> 
+                    {/* actions — pushed to right */}
+                    <div className="ml-auto flex gap-2">
+                        <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            ref={fileInputRef}
+                            onChange={handleFileChange}
+                            className="hidden"
+                        />
                         <button
-                            className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
                             onClick={() => fileInputRef.current?.click()}
                         >
-                            Edit profile picture
+                            Edit photo
                         </button>
-
                         <button
-                            className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-red-400 hover:text-red-400 transition-colors"
                             onClick={handleSignout}
                         >
                             Sign out
                         </button>
                     </div>
                 </div>
-            
-                {/* feed grid placeholder, show "No posts yet" text if user has no posts */}
-                {images.length === 0 ? 
-                    <div className="flex w-full items-center justify-center mt-16">
-                        <p className="text-zinc-400">No posts yet.</p>
+
+                {/* divider */}
+                <div className="border-t border-zinc-100 dark:border-zinc-800 mb-6" />
+
+                {/* posts grid */}
+                {images.length === 0 ?
+                    <div className="flex w-full items-center justify-center py-24">
+                        <p className="text-sm text-zinc-400">No posts yet.</p>
                     </div>
-                    
-                    : 
-                    
-                    /* map posts */ 
-                    <div className="grid grid-cols-3 gap-1 w-full mt-8">
+
+                    :
+
+                    /* map posts */
+                    <div className="grid grid-cols-3 gap-1 w-full">
                         {images.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
-                                <Image src={image.url} alt="fit" fill className="object-cover" />
-                            </div> 
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
+                            </div>
                         ))}
                     </div>
-                }   
+                }
             </main>
 
-            {followingModal && (<Modal onClose={() => setFollowingModal(false)}>
-                {<div className="flex flex-col gap-1 w-full">
-                    {followingList.map((user) => (
-                        <div key={user.following_id} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
-                            <p> {user.username} </p>
-                        </div> 
-                    ))}
-                </div>}
-            </Modal>)} 
-
-            {followerModal && (<Modal onClose={() => setFollowerModal(false)}>
-                {<div className="flex flex-col gap-1 w-full">
-                    {followerList.map((user) => (
-                        <div key={user.follower_id} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
-                            <p> {user.username} </p>
-                        </div> 
-                    ))}
-                </div>}
-            </Modal>)} 
-
-            {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
-                {<div className="flex"> 
-                    <div className="relative aspect-square w-2/3">
-                        <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+            {/* following modal */}
+            {followingModal && (
+                <Modal onClose={() => setFollowingModal(false)}>
+                    <div className="p-6">
+                        <h2 className="text-base font-semibold text-black dark:text-white mb-4">Following</h2>
+                        {followingList.length === 0
+                            ? <p className="text-sm text-zinc-400">Not following anyone yet.</p>
+                            : <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+                                {followingList.map((user) => (
+                                    <div key={user.following_id} className="py-3">
+                                        <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        }
                     </div>
+                </Modal>
+            )}
 
-                    <div className="bg-white flex flex-col items-center justify-center text-black w-1/3"> 
-                        <p> hi </p>
+            {/* followers modal */}
+            {followerModal && (
+                <Modal onClose={() => setFollowerModal(false)}>
+                    <div className="p-6">
+                        <h2 className="text-base font-semibold text-black dark:text-white mb-4">Followers</h2>
+                        {followerList.length === 0
+                            ? <p className="text-sm text-zinc-400">No followers yet.</p>
+                            : <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+                                {followerList.map((user) => (
+                                    <div key={user.follower_id} className="py-3">
+                                        <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        }
                     </div>
-                </div>}
-            </Modal>)}
+                </Modal>
+            )}
+
+            {/* image detail modal */}
+            {selectedImage && (
+                <Modal onClose={() => setSelectedImage(null)}>
+                    <div className="flex">
+                        <div className="relative aspect-square w-2/3">
+                            <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+                        </div>
+                        <div className="flex flex-col gap-2 p-5 w-1/3">
+                            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted</p>
+                            <p className="text-xs text-zinc-400 mt-auto">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                        </div>
+                    </div>
+                </Modal>
+            )}
 
         </div>
     );

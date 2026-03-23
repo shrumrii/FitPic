@@ -10,7 +10,7 @@ export default function Navbar() {
     const { username, profilePic } = useUser() ?? { username: "", profilePic: null };
     const router = useRouter(); 
 
-    return (<nav className="w-full bg-white dark:bg-zinc-900 px-8 py-4 flex items-center justify-between"> 
+    return (<nav className="w-full bg-white dark:bg-black border-b border-zinc-100 dark:border-zinc-800 px-6 py-3 flex items-center justify-between">
                 <div className="flex flex-row items-center gap-2"> 
                     <Sidebar />
                     <Link href="/dashboard"> <h1 className="text-amber-400 font-semibold text-xl"> FitPic </h1> </Link>
