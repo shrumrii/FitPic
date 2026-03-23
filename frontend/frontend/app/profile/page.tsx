@@ -213,7 +213,7 @@ export default function Profile() {
                         />
 
                         <button
-                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                            className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`} 
                             onClick={() => setEditMode(!editMode)}                                                                                                     
                         >
                             Edit Mode
@@ -252,16 +252,11 @@ export default function Profile() {
 
                                 {/* add x button if in editMode */} 
                                 {editMode && (                                                                                                                             
-                                    <button                                                                                                                                
-                                        className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${                                                           
-                                            editMode ? "border-amber-400 text-amber-400"                                                                                                
-                                            : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber-400"
-                                        }`}                                                                                                                                                                                                                              
-                                        onClick={(e) => {e.stopPropagation(); // prevent opening the image modal                                                                        
-                                            deleteImage(image.image_id);                                                                                                                                                                                                                      
-                                        }}                                                                                                                                 
-                                    >                                                                                                                                                                                                                                                                      
-                                        ✕                                                                                                                                  
+                                    <button
+                                        className="absolute top-1 right-1 z-10 w-5 h-5 bg-black/60 hover:bg-red-500 text-white rounded-full text-xs flex items-center justify-center transition-colors"
+                                        onClick={(e) => { e.stopPropagation(); deleteImage(image.image_id); }}
+                                    >
+                                        ✕
                                     </button>                                                                                                                              
                                 )}  
                             </div>
