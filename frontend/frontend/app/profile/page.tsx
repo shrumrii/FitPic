@@ -5,57 +5,39 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
 import Spinner from "@/components/spinner"; 
-import { getUser } from "@/lib/getUser"; 
+import { useUser } from "@/context/userContext";
+import Modal from "@/components/modal"; 
 
 
 export default function Profile() {
 
-    const [username, setUsername] = useState("");
-    const [user_id, setUserID] = useState("");
-    const [age, setAge] = useState("");
-    const [loading, setLoading] = useState(false);
-    const [profilePic, setProfilePic] = useState<string | null>(null);
+    const { username, user_id, profilePic, loading, age, refreshUser } = useUser() ?? { username: "", user_id: "", profilePic: null, loading: false, age: "", refreshUser: () => {}};
+
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]); 
+    const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
+    const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
+    const [followingModal, setFollowingModal] = useState(false); 
+    const [followerModal, setFollowerModal] = useState(false); 
+    
     const router = useRouter();
 
     useEffect(() => {
 
         //load user profile 
         const getProfileInfo = async () => {
-            setLoading(true);
+      
+            if (user_id == "" && loading == false) { 
+                console.log("No user info found, redirecting to welcome page"); 
+                router.push("/welcome"); 
+                return; 
+            }
 
             try {
 
-                const user = await getUser(); 
-                if (user == null) { 
-                    console.log("Redirect to welcome page"); 
-                    router.push("/welcome"); 
-                    return; 
-                }
-
-                const response = await fetch(`http://localhost:8000/users/${user.id}`);
-
-                if (!response.ok) {
-                    throw new Error("Failed to get user id");
-                }
-
-                const result = await response.json();
-
-                if (!result.success) {
-                    console.log(result.message);
-                    router.push("/onboarding");
-                    return;
-                }
-
-                setUsername(result.data.username);
-                setAge(result.data.age);
-                setProfilePic(result.data.pfp_url);
-                setUserID(user.id);
-
                 //load images 
-                console.log(`fetching: http://localhost:8000/users/${user.id}/images`)
-                const imagesResponse = await fetch(`http://localhost:8000/users/${user.id}/images`); 
+                console.log(`fetching: http://localhost:8000/users/${user_id}/images`)
+                const imagesResponse = await fetch(`http://localhost:8000/users/${user_id}/images`); 
 
                 if (!imagesResponse.ok) {
                     throw new Error("Failed to get user's images");
@@ -69,12 +51,10 @@ export default function Profile() {
 
             } catch (error) {
                 console.error(error); 
-            } finally {
-                setLoading(false);
-            }
+            } 
         }
         getProfileInfo();
-    }, []);
+    }, [loading, user_id]);
 
     //update profile pic 
     const changeProfilePicture = async (file: File) => {
@@ -94,7 +74,7 @@ export default function Profile() {
 
             const result = await response.json();
             if (result.success) {
-                setProfilePic(result.updated_row.pfp_url);
+                refreshUser(); 
             }
 
         } catch (error) {
@@ -115,6 +95,50 @@ export default function Profile() {
         router.push("/welcome"); 
     }
 
+    const getFollowing = async () => { 
+        try { 
+            const response = await fetch(`http://localhost:8000/users/${user_id}/following`); 
+
+            if (!response.ok) { 
+                console.error("Could not get following");
+                throw new Error("Could not get following");
+            }
+
+            const result = await response.json();  
+            
+            setFollowingList(result.data.map((item: any) => ({
+                following_id: item.following_id,                                                                                                       
+                username: item.users.username                                                                                                          
+            })));  
+            setFollowingModal(true); 
+        
+        } catch (error) { 
+            console.error(error); 
+        } 
+    }
+
+    const getFollowers = async () => { 
+        try { 
+            const response = await fetch(`http://localhost:8000/users/${user_id}/followers`); 
+
+            if (!response.ok) { 
+                console.error("Could not get followers");
+                throw new Error("Could not get followers");
+            }
+
+            const result = await response.json(); 
+            
+            setFollowerList(result.data.map((item: any) => ({
+                follower_id: item.follower_id,                                                                                                       
+                username: item.users.username                                                                                                          
+            })));  
+            setFollowerModal(true); 
+        
+        } catch (error) { 
+            console.error(error); 
+        } 
+    }
+
     if (loading) return <Spinner/>; 
 
     return (
@@ -132,11 +156,27 @@ export default function Profile() {
                             }
                         </div>
 
-                        <div className="flex flex-col gap-1">
-                            <p> {username} </p>
-                            <p> Age: {age} </p>
-                        </div>
 
+                        <div className="flex flex-col gap-1">
+                            <div className="flex flex-row gap-2">
+                                <p> {username} </p>
+                                <p> Age: {age} </p>
+                            </div>
+                            
+                            <div className="flex flex-row gap-2">
+                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                                    onClick={getFollowers}> 
+                                    Followers
+                                </button> 
+                                
+                                <button className="bg-black text-white rounded-lg px-6 py-3 hover:bg-amber-400 hover:text-black transition-colors dark:bg-white dark:text-black"
+                                    onClick={getFollowing}> 
+                                    Following
+                                </button> 
+                            </div>
+
+
+                        </div>
                     </div>
 
                     <input
@@ -181,11 +221,28 @@ export default function Profile() {
                         ))}
                     </div>
                 }   
-
-
-                
-
             </main>
+
+            {followingModal && (<Modal onClose={() => setFollowingModal(false)}>
+                {<div className="flex flex-col gap-1 w-full">
+                    {followingList.map((user) => (
+                        <div key={user.following_id} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                            <p> {user.username} </p>
+                        </div> 
+                    ))}
+                </div>}
+            </Modal>)} 
+
+            {followerModal && (<Modal onClose={() => setFollowerModal(false)}>
+                {<div className="flex flex-col gap-1 w-full">
+                    {followerList.map((user) => (
+                        <div key={user.follower_id} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                            <p> {user.username} </p>
+                        </div> 
+                    ))}
+                </div>}
+            </Modal>)} 
+
         </div>
     );
 }

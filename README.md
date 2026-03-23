@@ -46,7 +46,8 @@ Finished:
 - create feed modals 
 - show "following" if already followed in friend search 
 - created userContext
-
+- used react shared context for sidebar/navbar/page
+- created sidebar 
 
 TODO: 
 -  AI model 
@@ -61,12 +62,9 @@ TODO:
 - add forgot password 
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
 - Remove picture option 
-- add modal for the profile page too 
-- create sidebar
 - clean up code 
 - turn image grid and modal into components 
 - create friends page. follow button can turn into modal as well 
-- use react shared context for sidebar/navbar/page
 - refactor pages with user context 
 
 DATABASE WORK: 

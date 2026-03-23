@@ -178,6 +178,19 @@ async def get_following(user_id: str):
         "data": following
     }
 
+#get list of followers 
+@app.get("/users/{user_id}/followers")
+async def get_followers(user_id: str): 
+
+    #joining users and follows table to get username based on following_id 
+    query = supabase.table("follows").select("follower_id, users!follows_follower_id_fkey(username)").eq("following_id", user_id).execute() 
+    followers = query.data 
+
+    return {
+        "success": True, 
+        "data": followers
+    }
+
 #get user feed, essentially combine /following and /images endpoints 
 @app.get("/users/{user_id}/feed")
 async def get_feed(user_id: str):

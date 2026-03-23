@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner"; 
 import { getUser } from "@/lib/getUser"; 
+import Modal from "@/components/modal" 
 
 export default function Dashboard() {
     
@@ -113,25 +114,19 @@ export default function Dashboard() {
                         </div>
                 }
 
-                {/* modal */}
-                {selectedImage && (
-                    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center" onClick={() => setSelectedImage(null)}> 
-                        
-                        <div className="bg-white flex flex-row rounded-xl overflow-hidden max-w-lg w-full mx-4 max-w-4xl" onClick={e => e.stopPropagation()}>
-                            <div className="relative aspect-square w-2/3">
-                                <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
-                            </div>
-
-                            <div className="bg-white flex flex-col items-center justify-center text-black w-1/3"> 
-                                <p> {selectedImage.user_id} </p>
-                            </div> 
-                            
-                
-                        </div>
-                    </div>)
-                }
-
             </main>
+
+            {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
+                {<div className="flex"> 
+                    <div className="relative aspect-square w-2/3">
+                        <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+                    </div>
+
+                    <div className="bg-white flex flex-col items-center justify-center text-black w-1/3"> 
+                        <p> {selectedImage.user_id} </p>
+                    </div>
+                </div>}
+            </Modal>)}
         </div>
     ); 
 }

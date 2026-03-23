@@ -7,6 +7,8 @@ type UserContextType = {
     profilePic: string | null
     user_id: string 
     loading: boolean 
+    age: string | null
+    refreshUser: () => void
 }
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -19,48 +21,49 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const [username, setUsername] = useState(""); 
     const [profilePic, setProfilePic] = useState<string | null>(null)
     const [userID, setUserID] = useState(""); 
-    const [loading, setLoading] = useState(false); 
+    const [loading, setLoading] = useState(true); 
+    const [age, setAge] = useState("");
 
-    useEffect(() => { 
+    const fetchInfo = async () => { 
+        setLoading(true); 
+        try { 
 
+            const user = await getUser(); 
+            if (user == null) return; 
+            
+            const response = await fetch(`http://localhost:8000/users/${user.id}`); 
 
-        const fetchInfo = async () => { 
-            setLoading(true); 
-            try { 
-
-                const user = await getUser(); 
-                if (user == null) return; 
-                
-                const response = await fetch(`http://localhost:8000/users/${user.id}`); 
-
-                if (!response.ok) { 
-                    console.log(await response.text()); 
-                    throw new Error("Failed to get user info"); 
-                }
-
-                const result = await response.json(); 
-                if (!result.success) { 
-                    console.log(result.message);
-                    throw new Error("Failed to get user info"); 
-                }
-
-                setUserID(user.id); 
-                setUsername(result.data.username); 
-                setProfilePic(result.data.pfp_url);
-
-
-            } catch (error) { 
-                console.error(error); 
-            } finally { 
-                setLoading(false); 
+            if (!response.ok) { 
+                console.log(await response.text()); 
+                throw new Error("Failed to get user info"); 
             }
 
+            const result = await response.json(); 
+            if (!result.success) { 
+                console.log(result.message);
+                throw new Error("Failed to get user info"); 
+            }
 
+            setUserID(user.id); 
+            setUsername(result.data.username); 
+            setProfilePic(result.data.pfp_url);
+            setAge(result.data.age); 
+
+
+        } catch (error) { 
+            console.error(error); 
+        } finally { 
+            setLoading(false); 
         }
+    }
+
+    useEffect(() => { 
         fetchInfo(); 
     }, []) 
 
-    return <UserContext.Provider value={{ username, profilePic, user_id: userID, loading }}>{children}</UserContext.Provider>
+
+
+    return <UserContext.Provider value={{ username, profilePic, user_id: userID, loading, age, refreshUser: fetchInfo }}>{children}</UserContext.Provider>
 }
 
 export function useUser() {
