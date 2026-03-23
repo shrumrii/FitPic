@@ -90,8 +90,8 @@ export default function Dashboard() {
     return (
         <div className="flex flex-col min-h-screen bg-zinc-100 font-sans dark:bg-black">
             <Navbar/>
-            <main className="flex min-h-screen w-full max-w-3xl mx-auto flex-col items-center justify-start py-32 px-16 bg-white dark:bg-black">
-                <h1 className="text-3xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
+            <main className="flex min-h-screen w-full max-w-3xl mx-auto flex-col items-center justify-start py-8 px-16 bg-white dark:bg-black">
+                <h1 className="text-xl font-bold tracking-tight text-black dark:text-white sm:text-[5rem]">
                     My Feed
                 </h1>
  

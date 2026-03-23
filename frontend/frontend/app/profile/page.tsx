@@ -17,6 +17,7 @@ export default function Profile() {
     const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]); 
     const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
     const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string} | null>(null);
     const [followingModal, setFollowingModal] = useState(false); 
     const [followerModal, setFollowerModal] = useState(false); 
     
@@ -27,6 +28,8 @@ export default function Profile() {
         //load user profile 
         const getProfileInfo = async () => {
       
+            if (user_id == "") return;
+
             if (user_id == "" && loading == false) { 
                 console.log("No user info found, redirecting to welcome page"); 
                 router.push("/welcome"); 
@@ -40,6 +43,7 @@ export default function Profile() {
                 const imagesResponse = await fetch(`http://localhost:8000/users/${user_id}/images`); 
 
                 if (!imagesResponse.ok) {
+                    console.log(imagesResponse.status)
                     throw new Error("Failed to get user's images");
                 }
 
@@ -215,7 +219,7 @@ export default function Profile() {
                     /* map posts */ 
                     <div className="grid grid-cols-3 gap-1 w-full mt-8">
                         {images.map((image) => (
-                            <div key={image.image_id} className="aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-200 dark:bg-zinc-800 rounded-sm"> 
                                 <Image src={image.url} alt="fit" fill className="object-cover" />
                             </div> 
                         ))}
@@ -242,6 +246,18 @@ export default function Profile() {
                     ))}
                 </div>}
             </Modal>)} 
+
+            {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
+                {<div className="flex"> 
+                    <div className="relative aspect-square w-2/3">
+                        <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+                    </div>
+
+                    <div className="bg-white flex flex-col items-center justify-center text-black w-1/3"> 
+                        <p> hi </p>
+                    </div>
+                </div>}
+            </Modal>)}
 
         </div>
     );

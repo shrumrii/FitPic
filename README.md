@@ -48,6 +48,8 @@ Finished:
 - created userContext
 - used react shared context for sidebar/navbar/page
 - created sidebar 
+- turned image grid into modal component 
+- added see followers and following button 
 
 TODO: 
 -  AI model 
@@ -63,8 +65,6 @@ TODO:
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
 - Remove picture option 
 - clean up code 
-- turn image grid and modal into components 
-- create friends page. follow button can turn into modal as well 
 - refactor pages with user context 
 
 DATABASE WORK: 
