@@ -20,6 +20,7 @@ export default function Profile() {
     const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string} | null>(null);
     const [followingModal, setFollowingModal] = useState(false);
     const [followerModal, setFollowerModal] = useState(false);
+    const [editMode, setEditMode] = useState(false); 
 
     const router = useRouter();
 
@@ -140,6 +141,32 @@ export default function Profile() {
         }
     }
 
+    const deleteImage = async (image_id: string) => { 
+
+        if (!confirm("Delete this post?")) return;  // add this  
+        try { 
+            const response = await fetch(`http://localhost:8000/users/${user_id}/images/${image_id}`, {method: 'DELETE'}); 
+
+            if (!response.ok) {
+                console.error("Could not delete image");
+                throw new Error("Could not delete image");
+            }
+
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not delete image"); 
+            }
+
+            setImages(images.filter(img => img.image_id !== image_id));
+
+
+        } catch (error) { 
+            console.error(error); 
+        }
+    }
+
     if (loading) return <Spinner/>;
 
     return (
@@ -184,6 +211,13 @@ export default function Profile() {
                             onChange={handleFileChange}
                             className="hidden"
                         />
+
+                        <button
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                            onClick={() => setEditMode(!editMode)}                                                                                                     
+                        >
+                            Edit Mode
+                        </button>
                         <button
                             className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
                             onClick={() => fileInputRef.current?.click()}
@@ -215,6 +249,21 @@ export default function Profile() {
                         {images.map((image) => (
                             <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                                 <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
+
+                                {/* add x button if in editMode */} 
+                                {editMode && (                                                                                                                             
+                                    <button                                                                                                                                
+                                        className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${                                                           
+                                            editMode ? "border-amber-400 text-amber-400"                                                                                                
+                                            : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber-400"
+                                        }`}                                                                                                                                                                                                                              
+                                        onClick={(e) => {e.stopPropagation(); // prevent opening the image modal                                                                        
+                                            deleteImage(image.image_id);                                                                                                                                                                                                                      
+                                        }}                                                                                                                                 
+                                    >                                                                                                                                                                                                                                                                      
+                                        ✕                                                                                                                                  
+                                    </button>                                                                                                                              
+                                )}  
                             </div>
                         ))}
                     </div>

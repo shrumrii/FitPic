@@ -11,8 +11,8 @@ export default function Dashboard() {
 
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [feed, setFeed] = useState<{user_id: string, image_id: string, url: string, created_at: string}[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{user_id: string, image_id: string, url: string, created_at: string} | null>(null);
+    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string}[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string} | null>(null);
 
     useEffect(() => {
         const getUserFeed = async (id: string) => {
@@ -28,12 +28,13 @@ export default function Dashboard() {
 
                 const result = await response.json();
                 if (!result.success) {
-                    console.log(await result.text());
+                    console.log(result.message);
                     throw new Error("Failed to get feed");
                 }
 
                 const feed = result.data;
                 setFeed(feed);
+                console.log(feed); 
 
             } catch (error) {
                 console.error(error);
@@ -124,7 +125,7 @@ export default function Dashboard() {
                     </div>
                     <div className="flex flex-col gap-2 p-5 w-1/3">
                         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
-                        <p className="text-sm font-medium text-black dark:text-white">{selectedImage.user_id}</p>
+                        <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
                         <p className="text-xs text-zinc-400 mt-auto">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
                     </div>
                 </div>

@@ -8,7 +8,7 @@ import { getUser } from "@/lib/getUser";
 export default function Friend() {
 
     const router = useRouter();
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(false); 
     const [usernameSearchString, setUsernameSearchString] = useState("");
     const [usernameList, setUsernameList] = useState<{user_id: string, username: string | null}[]>([]);
     const [searching, setSearching] = useState(false);
@@ -17,11 +17,9 @@ export default function Friend() {
     const [popupMessage, setPopupMessage] = useState("");
     const [followedList, setFollowedList] = useState<string[]>([]);
 
-
     useEffect(() => {
         const populateFriendPage = async () => {
 
-            setLoading(true);
             try {
 
                 const user = await getUser();
@@ -46,12 +44,9 @@ export default function Friend() {
                 //map followedList to just be a list of following ids
                 setFollowedList(result.data.map((item: {following_id: string}) => item.following_id));
 
-
             } catch (error) {
                 console.error(error);
-            } finally {
-                setLoading(false);
-            }
+            } 
         }
         populateFriendPage();
     }, [])
@@ -59,9 +54,8 @@ export default function Friend() {
     //when user clicks
     const handleSearch = async () => {
 
-        setLoading(true);
         try {
-
+            setLoading(true); 
             const response = await fetch(`http://localhost:8000/users/search?username=${usernameSearchString}`);
 
             if (!response.ok) {
@@ -140,9 +134,9 @@ export default function Friend() {
                     <button
                         className="bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50 whitespace-nowrap"
                         onClick={handleSearch}
-                        disabled={!usernameSearchString}
+                        disabled={!usernameSearchString || loading}
                     >
-                        Search
+                        {loading ? "Searching..." : "Search"}
                     </button>
                 </div>
 

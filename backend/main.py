@@ -5,6 +5,7 @@ from PIL import Image
 import io 
 from database import supabase #import client from database.py 
 from pydantic import BaseModel 
+import uuid 
 
 app = FastAPI() 
 
@@ -204,10 +205,10 @@ async def get_feed(user_id: str):
         for item in following: 
             following_id = item["following_id"]
 
-            query = supabase.table("images").select("image_id, created_at, url").eq("user_id", following_id).order("created_at", desc=True).execute() 
+            query = supabase.table("images").select("image_id, users(username), created_at, url").eq("user_id", following_id).order("created_at", desc=True).execute() 
             images = query.data
             for image in images: 
-                image_dict = {"user_id": following_id, "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
+                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
                 feed_list.append(image_dict) 
 
         #sort by most recent across all friends 
@@ -222,8 +223,34 @@ async def get_feed(user_id: str):
             "success": False, 
             "message": str(e) 
         }
+    
+@app.delete("/users/{user_id}/images/{image_id}")
+async def delete_image(user_id: str, image_id: str): 
 
-        
+    try:
+        #validate image belongs to the user and get file_name for storage deletion
+        query = supabase.table("images").select("image_id, file_name").eq("image_id", image_id).eq("user_id", user_id).execute()
+        if not query.data:
+            return {
+                "success": False,
+                "message": "Image not found or does not belong to you"
+            }
+
+        file_name = query.data[0]["file_name"]
+
+        #delete from storage
+        supabase.storage.from_("images").remove([file_name])
+
+        #delete from db
+        supabase.table("images").delete().eq("image_id", image_id).execute()
+
+        return {
+            "success": True,
+            "message": f"Successfully deleted {image_id}"
+        }                                                                                                           
+    except Exception as e:                                                                                                               
+        return {"success": False, "message": str(e)}
+
 
 @app.post("/images/upload")
 async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
@@ -238,7 +265,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
     contents = img_io.read()  
 
     clean_filename = image.filename.replace(" ", "_") 
-    unique_filename = f"{user_id}_{clean_filename}"
+    unique_filename = f"{user_id}_{uuid.uuid4()}_{clean_filename}"
     #upload to supabase storage 
     upload = supabase.storage.from_("images").upload(
         unique_filename, 
@@ -250,7 +277,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
     #store in images table 
     data = { 
         "url": image_url, 
-        "file_name": image.filename,
+        "file_name": unique_filename,
         "content_type": image.content_type,
         "size_bytes": len(contents), 
         "user_id": user_id,  

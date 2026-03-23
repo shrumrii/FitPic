@@ -50,6 +50,7 @@ Finished:
 - created sidebar 
 - turned image grid into modal component 
 - added see followers and following button 
+- cleaned up ui 
 
 TODO: 
 -  AI model 
@@ -65,7 +66,7 @@ TODO:
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
 - Remove picture option 
 - clean up code 
-- refactor pages with user context 
+- rankings feature 
 
 DATABASE WORK: 
 - prevent data duplication 
