@@ -7,6 +7,7 @@ import Image from "next/image";
 import Spinner from "@/components/spinner";
 import { useUser } from "@/context/userContext";
 import Modal from "@/components/modal";
+import ConfirmModal from "@/components/confirmModal"; 
 
 
 export default function Profile() {
@@ -21,6 +22,8 @@ export default function Profile() {
     const [followingModal, setFollowingModal] = useState(false);
     const [followerModal, setFollowerModal] = useState(false);
     const [editMode, setEditMode] = useState(false); 
+    const [confirmModal, setConfirmModal] = useState(false); 
+    const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
 
     const router = useRouter();
 
@@ -254,7 +257,10 @@ export default function Profile() {
                                 {editMode && (                                                                                                                             
                                     <button
                                         className="absolute top-1 right-1 z-10 w-5 h-5 bg-black/60 hover:bg-red-500 text-white rounded-full text-xs flex items-center justify-center transition-colors"
-                                        onClick={(e) => { e.stopPropagation(); deleteImage(image.image_id); }}
+                                        onClick={(e) => { e.stopPropagation(); 
+                                            setConfirmModal(true); 
+                                            setImageToDelete(image.image_id);
+                                        }}
                                     >
                                         ✕
                                     </button>                                                                                                                              
@@ -317,6 +323,17 @@ export default function Profile() {
                     </div>
                 </Modal>
             )}
+
+            {/* delete confirm modal */}
+            {confirmModal && (
+                <ConfirmModal 
+                    message="Are you sure you want to delete this post?"
+                    onConfirm={() => deleteImage(imageToDelete!)}
+                    onClose={() => { setConfirmModal(false); setImageToDelete(null); }}
+                />
+            )}
+
+            
 
         </div>
     );
