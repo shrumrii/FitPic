@@ -1,6 +1,5 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-import uuid
 from PIL import Image 
 import io 
 from database import supabase #import client from database.py 
@@ -11,7 +10,7 @@ app = FastAPI()
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "https://fit-pic.vercel.app/"],   
+    allow_origins=["http://localhost:3000", "https://fit-pic.vercel.app"],   
     allow_methods=["*"],                      
     allow_headers=["*"],                    
 )
