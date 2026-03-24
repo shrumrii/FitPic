@@ -51,6 +51,7 @@ Finished:
 - turned image grid into modal component 
 - added see followers and following button 
 - cleaned up ui 
+- Remove picture option with edit mode 
 
 TODO: 
 -  AI model 
@@ -64,7 +65,6 @@ TODO:
 - optimize feed endpoint 
 - add forgot password 
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
-- Remove picture option 
 - clean up code 
 - rankings feature 
 
