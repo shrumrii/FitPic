@@ -32,7 +32,7 @@ export default function Friend() {
 
                 setUserID(user.id);
 
-                const response = await fetch(`http://localhost:8000/users/${user.id}/following`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/following`);
 
                 if (!response.ok) {
                     console.log(await response.text())
@@ -56,7 +56,7 @@ export default function Friend() {
 
         try {
             setLoading(true); 
-            const response = await fetch(`http://localhost:8000/users/search?username=${usernameSearchString}`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search?username=${usernameSearchString}`);
 
             if (!response.ok) {
                 console.log(await response.text())
@@ -80,7 +80,7 @@ export default function Friend() {
 
         try {
 
-            const response = await fetch(`http://localhost:8000/users/${userID}/follow`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/follow`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ following_id: followingID })

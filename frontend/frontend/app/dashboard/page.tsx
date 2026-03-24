@@ -19,7 +19,7 @@ export default function Dashboard() {
 
             try {
 
-                const response = await fetch(`http://localhost:8000/users/${id}/feed`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/feed`);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -58,7 +58,7 @@ export default function Dashboard() {
                 }
 
                 //check if uid in database
-                const response = await fetch(`http://localhost:8000/users/${user.id}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`);
 
                 if (!response.ok) {
                     console.log(await response.text())

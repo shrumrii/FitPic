@@ -55,7 +55,7 @@ export default function Onboarding() {
             }
 
             //combine with form data and send to backend
-            const response = await fetch("http://localhost:8000/users/create", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...formData, age: formData.age === "" ? null : Number(formData.age), id: user.id, email: user.email })

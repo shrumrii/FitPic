@@ -43,8 +43,7 @@ export default function Profile() {
             try {
 
                 //load images
-                console.log(`fetching: http://localhost:8000/users/${user_id}/images`)
-                const imagesResponse = await fetch(`http://localhost:8000/users/${user_id}/images`);
+                const imagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images`);
 
                 if (!imagesResponse.ok) {
                     console.log(imagesResponse.status)
@@ -67,7 +66,7 @@ export default function Profile() {
             const formData = new FormData();
             formData.append("image", file);
 
-            const response = await fetch(`http://localhost:8000/users/${user_id}/pfp`, {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/pfp`, {
                 method: "POST",
                 body: formData
             });
@@ -102,7 +101,7 @@ export default function Profile() {
 
     const getFollowing = async () => {
         try {
-            const response = await fetch(`http://localhost:8000/users/${user_id}/following`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/following`);
 
             if (!response.ok) {
                 console.error("Could not get following");
@@ -124,7 +123,7 @@ export default function Profile() {
 
     const getFollowers = async () => {
         try {
-            const response = await fetch(`http://localhost:8000/users/${user_id}/followers`);
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/followers`);
 
             if (!response.ok) {
                 console.error("Could not get followers");
@@ -148,7 +147,7 @@ export default function Profile() {
 
         if (!confirm("Delete this post?")) return;  // add this  
         try { 
-            const response = await fetch(`http://localhost:8000/users/${user_id}/images/${image_id}`, {method: 'DELETE'}); 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images/${image_id}`, {method: 'DELETE'}); 
 
             if (!response.ok) {
                 console.error("Could not delete image");

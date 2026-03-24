@@ -56,7 +56,7 @@ export default function UploadPage() {
 
             formData.append("user_id", userID);
 
-            const response = await fetch("http://localhost:8000/images/upload", {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
                 method: "POST",
                 body: formData
             })

@@ -31,7 +31,7 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
             const user = await getUser(); 
             if (user == null) return; 
             
-            const response = await fetch(`http://localhost:8000/users/${user.id}`); 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`); 
 
             if (!response.ok) { 
                 console.log(await response.text()); 
