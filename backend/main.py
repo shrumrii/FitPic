@@ -73,16 +73,14 @@ async def get_user(user_id: str):
 async def get_images(user_id: str):
 
     #query, filter by user_id and fetch image id, url, created_at 
-    query = supabase.table("images").select("image_id, created_at, url").eq("user_id", user_id).order("created_at", desc=True).execute() 
+    query = supabase.table("images").select("image_id, created_at, url, favorite").eq("user_id", user_id).order("created_at", desc=True).execute() 
 
-    print('hi') 
     #return list of json objects with data (such as image url, etc.) 
     #if empty, handle on frontend (user could have no posts) 
     return { 
         "success": True, 
         "data": query.data
     }
-
 
 @app.post("/users/{user_id}/pfp")
 async def upload_pfp(user_id: str, image: UploadFile = File(...)): 
@@ -292,6 +290,41 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         "data": inserted_row, 
         "message": f"Image {image.filename} uploaded."
     }
+
+@app.get("/users/{user_id}/favorites")
+async def get_favorites(user_id: str): 
+
+
+    query = supabase.table("images").select("users(username), image_id, url, created_at, favorite").eq("user_id", user_id).eq("favorite", True).order("created_at", desc=True).execute() 
+    favorites = query.data 
+
+    return {
+        "success": True, 
+        "data": favorites
+    }
+
+class ToggleFavorite(BaseModel): 
+        favorite: bool 
+
+@app.patch("/images/{image_id}/toggle-favorite")
+async def favorite(image_id: str, favorite_bool: ToggleFavorite): 
+    query = supabase.table("images").update({"favorite": favorite_bool.favorite}).eq("image_id", image_id).execute() 
+    updated_row = query.data[0] if query.data and len(query.data) > 0 else None 
+
+    if not updated_row: 
+        return { 
+            "success": False, 
+            "message": f"Unable to favorite {image_id}"
+        }
+
+    return { 
+        "success": True, 
+        "message": f"Favorited {image_id}" 
+    }
+
+# @app.get("/images/rank")
+# async def get_image_rank(image_id: str):
+
 
 
 

@@ -15,15 +15,16 @@ export default function Profile() {
     const { username, user_id, profilePic, loading, age, refreshUser } = useUser() ?? { username: "", user_id: "", profilePic: null, loading: false, age: "", refreshUser: () => {}};
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]);
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string, favorite: boolean }[]>([]);
     const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
     const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string} | null>(null);
+    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string, favorite: boolean} | null>(null);
     const [followingModal, setFollowingModal] = useState(false);
     const [followerModal, setFollowerModal] = useState(false);
     const [editMode, setEditMode] = useState(false); 
     const [confirmModal, setConfirmModal] = useState(false); 
     const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
+    
 
     const router = useRouter();
 
@@ -167,6 +168,37 @@ export default function Profile() {
         } catch (error) { 
             console.error(error); 
         }
+    }
+
+    const setFavorite = async (image_id: string) => { 
+
+        try { 
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/toggle-favorite`, 
+                {
+                    method: 'PATCH', 
+                    headers: {
+                        "Content-Type": 'application/json' 
+                    }, 
+                    body: JSON.stringify({ favorite: !selectedImage?.favorite }) 
+                });
+            
+            if (!response.ok) { 
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
+            }
+
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not favorite image - backend endpoint"); 
+            }
+
+
+        } catch (error) { 
+            console.error(error); 
+        } 
     }
 
     if (loading) return <Spinner/>;
@@ -317,7 +349,14 @@ export default function Profile() {
                         </div>
                         <div className="flex flex-col gap-2 p-5 w-1/3">
                             <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted</p>
-                            <p className="text-xs text-zinc-400 mt-auto">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                            <div className="flex items-center justify-between mt-auto">
+                                <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                                <button 
+                                    onClick={() => setFavorite(selectedImage.image_id)} 
+                                    className="text-xs text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors">
+                                    {selectedImage.favorite ? "Unfavorite" : "Favorite"}
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </Modal>

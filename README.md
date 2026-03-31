@@ -54,6 +54,7 @@ Finished:
 - Remove picture option with edit mode 
 
 TODO: 
+- ASAP: fix favorite/unfavorite button 
 -  AI model 
 - UI / page design 
 - middleware for route protection
@@ -67,6 +68,12 @@ TODO:
 - addd error handle for every post method in backend where a duplicate is a concern (follows) 
 - clean up code 
 - rankings feature 
+- if backend fails, im always rerouted to the welcome page. is this normal? 
+
+
+global exception handlers 
+baseModel pydantic 
+
 
 DATABASE WORK: 
 - prevent data duplication 
