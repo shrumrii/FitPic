@@ -195,6 +195,10 @@ export default function Profile() {
                 throw new Error("Could not favorite image - backend endpoint"); 
             }
 
+            //update images and selected image state 
+            setImages((prev) => prev.map((item) => item.image_id === image_id ? { ...item, favorite: !item.favorite } : item)); 
+            setSelectedImage((prev) => prev && prev.image_id === image_id ? { ...prev, favorite: !prev.favorite } : prev); 
+
 
         } catch (error) { 
             console.error(error); 

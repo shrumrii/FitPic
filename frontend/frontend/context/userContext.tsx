@@ -61,8 +61,6 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         fetchInfo(); 
     }, []) 
 
-
-
     return <UserContext.Provider value={{ username, profilePic, user_id: userID, loading, age, refreshUser: fetchInfo }}>{children}</UserContext.Provider>
 }
 

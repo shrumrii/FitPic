@@ -202,10 +202,10 @@ async def get_feed(user_id: str):
         for item in following: 
             following_id = item["following_id"]
 
-            query = supabase.table("images").select("image_id, users(username), created_at, url").eq("user_id", following_id).order("created_at", desc=True).execute() 
+            query = supabase.table("images").select("image_id, users(username), created_at, url, favorite").eq("user_id", following_id).order("created_at", desc=True).execute() 
             images = query.data
             for image in images: 
-                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
+                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"], "favorite": image["favorite"]}
                 feed_list.append(image_dict) 
 
         #sort by most recent across all friends 

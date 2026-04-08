@@ -11,8 +11,8 @@ export default function Dashboard() {
 
     const router = useRouter();
     const [loading, setLoading] = useState(false);
-    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string}[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string} | null>(null);
+    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, favorite: boolean}[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, favorite: boolean} | null>(null);
 
     useEffect(() => {
         const getUserFeed = async (id: string) => {
@@ -86,6 +86,40 @@ export default function Dashboard() {
         populateDashboard();
     }, [])
 
+    const toggleFavorite = async ( image_id: string) => { 
+
+        try { 
+            //toggle favorite status 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/toggle-favorite`, 
+                {
+                    method: 'PATCH', 
+                    headers: {
+                        "Content-Type": 'application/json' 
+                    }, 
+                    body: JSON.stringify({ favorite: !selectedImage?.favorite }) 
+                });
+            
+            if (!response.ok) { 
+                console.error("Could not toggle favorite");
+                throw new Error("Could not toggle favorite");
+            }
+
+            const result = await response.json(); 
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not toggle favorite - backend endpoint"); 
+            }
+
+            // update feed and selected image state 
+            setFeed((prev) => prev.map((item) => item.image_id === image_id ? { ...item, favorite: !item.favorite } : item)); 
+            setSelectedImage((prev) => prev && prev.image_id === image_id ? { ...prev, favorite: !prev.favorite } : prev); 
+            
+
+        } catch (error) {
+            console.error(error); 
+        } 
+    }
+
     if (loading) return <Spinner/>;
 
     return (
@@ -126,7 +160,10 @@ export default function Dashboard() {
                     <div className="flex flex-col gap-2 p-5 w-1/3">
                         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
                         <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
-                        <p className="text-xs text-zinc-400 mt-auto">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                        <div className="flex items-center justify-between mt-auto">
+                                <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
+                                {/* <button onClick={() => toggleFavorite(selectedImage.image_id)} className="text-xs text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"> {selectedImage.favorite ? "Unfavorite" : "Favorite"} </button> */}
+                        </div>
                     </div>
                 </div>
             </Modal>)}

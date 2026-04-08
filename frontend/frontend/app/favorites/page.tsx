@@ -59,16 +59,20 @@ export default function Favorites() {
                 });
             
             if (!response.ok) { 
-                console.error("Could not favorite image"); 
-                throw new Error("Could not favorite image"); 
+                console.error("Could not unfavorite image"); 
+                throw new Error("Could not unfavorite image"); 
             }
 
             const result = await response.json(); 
 
             if (!result.success) { 
                 console.log(result.message); 
-                throw new Error("Could not favorite image - backend endpoint"); 
+                throw new Error("Could not unfavorite image - backend endpoint"); 
             }
+
+            // update favorites list state 
+            setFavorites((prev) => prev.filter((fav) => fav.image_id !== image_id)); 
+            setSelectedImage(null); 
 
 
         } catch (error) { 
