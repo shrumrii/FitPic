@@ -202,7 +202,7 @@ async def get_feed(user_id: str):
         for item in following: 
             following_id = item["following_id"]
 
-            query = supabase.table("images").select("image_id, users(username), created_at, url, favorite").eq("user_id", following_id).order("created_at", desc=True).execute() 
+            query = supabase.table("images").select("image_id, users!images_user_id_fkey(username), created_at, url, favorite").eq("user_id", following_id).order("created_at", desc=True).execute() 
             images = query.data
             for image in images: 
                 image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"], "favorite": image["favorite"]}
@@ -294,7 +294,6 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
 @app.get("/users/{user_id}/favorites")
 async def get_favorites(user_id: str): 
 
-
     query = supabase.table("images").select("users(username), image_id, url, created_at, favorite").eq("user_id", user_id).eq("favorite", True).order("created_at", desc=True).execute() 
     favorites = query.data 
 
@@ -302,6 +301,57 @@ async def get_favorites(user_id: str):
         "success": True, 
         "data": favorites
     }
+
+#to load existing rankings page 
+@app.get("/users/{user_id}/rankings") 
+async def get_rankings(user_id: str): 
+
+    query = supabase.table("rankings").select("*, images(url)").eq("user_id", user_id).order("rank", desc=True).execute()
+    rankings = query.data 
+
+    return { 
+        "success": True, 
+        "data": rankings
+    }
+
+class Ranking(BaseModel): 
+    image_id: str 
+    rank: int
+
+class RankingList(BaseModel):
+    rankings: list[Ranking]
+
+# save new rankings, trust front end for validation 
+@app.put("/users/{user_id}/rankings")
+async def save_rankings(user_id: str, rankings: RankingList):
+
+    try: 
+        #delete existing rankings for user 
+        supabase.table("rankings").delete().eq("user_id", user_id).execute() 
+
+        new_rankings = [] 
+        #replace with new ones from ranking list 
+        for item in rankings.rankings: 
+            data = {
+                "user_id": user_id, 
+                "image_id": item.image_id, 
+                "rank": item.rank
+            }
+            new_rankings.append(data)
+        
+        supabase.table("rankings").insert(new_rankings).execute() 
+
+        return {
+            "success": True, 
+            "message": "Rankings saved successfully"
+        }
+    except Exception as e:
+
+        return { 
+            "success": False, 
+            "message": str(e) 
+        }
+
 
 class ToggleFavorite(BaseModel): 
         favorite: bool 
