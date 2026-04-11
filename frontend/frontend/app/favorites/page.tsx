@@ -7,6 +7,7 @@ import Spinner from "@/components/spinner";
 import { getUser } from "@/lib/getUser";
 import Modal from "@/components/modal"
 import { useUser } from "@/context/userContext";
+import Heart from "@/components/Heart";
 
 
 export default function Favorites() {
@@ -17,7 +18,6 @@ export default function Favorites() {
     const [loadingFavorites, setLoadingFavorites] = useState(false);
     const [favorites, setFavorites] = useState<{username: string, image_id: string, url: string, created_at: string, favorite: boolean }[]>([]);
     const [selectedImage, setSelectedImage] = useState<{username: string, image_id: string, url: string, created_at: string, favorite: boolean } | null>(null);
-    
 
     useEffect(() => {
         const getFavorites = async () => {
@@ -55,7 +55,7 @@ export default function Favorites() {
                     headers: {
                         "Content-Type": 'application/json' 
                     }, 
-                    body: JSON.stringify({ favorite: !selectedImage?.favorite }) 
+                    body: JSON.stringify({ favorite: false }) 
                 });
             
             if (!response.ok) { 
@@ -118,11 +118,12 @@ export default function Favorites() {
                         <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                     </div>
                     <div className="flex flex-col gap-2 p-5 w-1/3">
-                        <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
                         <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
                         <div className="flex items-center justify-between mt-auto">
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                <button onClick={() => unfavorite(selectedImage.image_id)} className="text-xs text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"> Unfavorite </button>
+                                <Heart filled={selectedImage.favorite} onToggle={() => unfavorite(selectedImage.image_id)} />
+                                
+                                
                             </div>
                     </div>
                 </div>

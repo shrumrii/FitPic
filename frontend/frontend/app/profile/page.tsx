@@ -352,7 +352,6 @@ export default function Profile() {
                             <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                         </div>
                         <div className="flex flex-col gap-2 p-5 w-1/3">
-                            <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted</p>
                             <div className="flex items-center justify-between mt-auto">
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
                                 <button 
