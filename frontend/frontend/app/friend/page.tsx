@@ -111,6 +111,35 @@ export default function Friend() {
         }
     }
 
+    const removeFriend = async (followingID: string) => {
+
+        try { 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/unfollow/${followingID}`, {
+                method: "DELETE"
+            }); 
+
+            if (!response.ok) {
+                console.log(await response.text());
+                throw new Error("error");
+            }
+
+            const result = await response.json();
+
+            if (!result.success) { 
+                console.log("Remove friend not successful");
+                return; 
+            } 
+
+            console.log(`${followingID} successfully removed`);
+            setFollowedList(followedList.filter(id => id !== followingID)); //remove from followedList state
+
+        } catch (error) { 
+            console.error(error);
+        }
+
+
+    } 
+
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
             <Navbar/>
@@ -151,9 +180,8 @@ export default function Friend() {
                                     <div key={user.user_id} className="flex items-center justify-between py-3">
                                         <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
                                         <button
-                                            className="text-sm font-medium rounded-lg px-4 py-1.5 transition-colors disabled:opacity-50 bg-black text-white hover:bg-amber-400 hover:text-black dark:bg-white dark:text-black disabled:bg-zinc-100 disabled:text-zinc-400 disabled:dark:bg-zinc-800 disabled:dark:text-zinc-500"
-                                            disabled={followedList.includes(user.user_id)}
-                                            onClick={() => addFriend(user.user_id)}
+                                            className="text-sm font-medium rounded-lg px-4 py-1.5 transition-colors bg-black text-white hover:bg-amber-400 hover:text-black dark:bg-white dark:text-black"
+                                            onClick={() => followedList.includes(user.user_id) ? removeFriend(user.user_id) : addFriend(user.user_id)}
                                         >
                                             {followedList.includes(user.user_id) ? "Following" : "Follow"}
                                         </button>

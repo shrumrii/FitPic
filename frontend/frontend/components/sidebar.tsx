@@ -27,6 +27,7 @@ export default function Sidebar() {
                         <Link href="/upload" onClick={() => setIsOpen(false)} className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-amber-400 dark:hover:text-amber-400 transition-colors px-2 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900">Upload FitPic</Link>
                         <Link href="/friend" onClick={() => setIsOpen(false)} className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-amber-400 dark:hover:text-amber-400 transition-colors px-2 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900">Find Friends</Link>
                         <Link href="/favorites" onClick={() => setIsOpen(false)} className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-amber-400 dark:hover:text-amber-400 transition-colors px-2 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900">My Favorites</Link>
+                        <Link href="/rankings" onClick={() => setIsOpen(false)} className="text-sm font-medium text-zinc-700 dark:text-zinc-300 hover:text-amber-400 dark:hover:text-amber-400 transition-colors px-2 py-2 rounded-lg hover:bg-zinc-50 dark:hover:bg-zinc-900">My Rankings</Link>
                     </div>
                 </div>
             )}

@@ -151,6 +151,22 @@ async def add_follower(follower_id: str, following: AddFollower):
         "data": inserted_row
     }
 
+@router.delete("/users/{follower_id}/unfollow/{following_id}")
+async def remove_follower(follower_id: str, following_id: str): 
+
+    try: 
+        supabase.table("follows").delete().eq("follower_id", follower_id).eq("following_id", following_id).execute() 
+
+        return { 
+            "success": True, 
+            "message": f"Successfully unfollowed {following_id}"
+        }
+    except Exception as e:
+        return { 
+            "success": False, 
+            "message": "Failed to remove follower"
+        }
+
 #get list of following
 @router.get("/users/{user_id}/following")
 async def get_following(user_id: str): 
@@ -239,7 +255,7 @@ async def delete_image(user_id: str, image_id: str):
 @router.get("/users/{user_id}/favorites")
 async def get_favorites(user_id: str): 
 
-    query = supabase.table("images").select("users(username), image_id, url, created_at, favorite").eq("user_id", user_id).eq("favorite", True).order("created_at", desc=True).execute() 
+    query = supabase.table("images").select("users!images_user_id_fkey(username), image_id, url, created_at, favorite").eq("user_id", user_id).eq("favorite", True).order("created_at", desc=True).execute() 
     favorites = query.data 
 
     return {
