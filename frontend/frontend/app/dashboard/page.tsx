@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "@/components/navbar"
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, use } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
 import { getUser } from "@/lib/getUser";
@@ -11,13 +11,13 @@ import Heart from "@/components/Heart";
 
 export default function Dashboard() {
 
-    const { username, user_id, loading: userLoading } = useUser() ?? { username: "", user_id: "", loading: false };
-    const [loading, setLoading] = useState(false);
+    const { username, user_id, loading } = useUser() ?? { username: "", user_id: "", loading: false };
     const router = useRouter();
-    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string}[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string} | null>(null);
+    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, likes: number }[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, likes: number} | null>(null);
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
     const [loadingFavorites, setLoadingFavorites] = useState(false);
+    const [fetched, setFetched] = useState(false);
 
     useEffect(() => {
         const getUserFeed = async (user_id: string) => {
@@ -38,20 +38,18 @@ export default function Dashboard() {
                 }
 
                 const feed = result.data;
-                setFeed(feed);
-                console.log(feed); 
+                setFeed(feed.map((item: any) => ({...item, likes: item.favorites?.[0]?.count ?? 0})));
 
             } catch (error) {
                 console.error(error);
             } finally {
-                setLoading(false);
             }
         }
 
         const populateDashboard = async () => {
 
-            if (userLoading || user_id == "") return;
-            setLoading(true);
+            console.log("populateDashboard called"); 
+            if (user_id == "") return;
 
             try {
 
@@ -77,13 +75,11 @@ export default function Dashboard() {
                 console.error("error", error);
                 router.push("/welcome")
             } finally {
-                setLoading(false);
+                setFetched(true); 
             }
         }
 
         const getFavorites = async (user_id: string) => {
-
-            if (user_id == "") return; 
 
             try { 
                 setLoadingFavorites(true); 
@@ -109,7 +105,7 @@ export default function Dashboard() {
         } 
 
         populateDashboard();
-    }, [userLoading, user_id])
+    }, [user_id, loading])
 
     const setFavorite = async (image_id: string) => { 
 
@@ -179,7 +175,7 @@ export default function Dashboard() {
         } 
     }
 
-    if (loading) return <Spinner/>;
+    if (!fetched) return <Spinner/>;
 
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
@@ -220,6 +216,7 @@ export default function Dashboard() {
                         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
                         <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
                         <div className="flex items-center justify-between mt-auto">
+                                <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
                                 <Heart filled={favoritedImageIDs.has(selectedImage.image_id)} onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)} />
                         </div>

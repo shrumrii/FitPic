@@ -17,10 +17,10 @@ export default function Profile() {
     const { username, user_id, profilePic, loading, age, refreshUser } = useUser() ?? { username: "", user_id: "", profilePic: null, loading: false, age: "", refreshUser: () => {}};
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const [images, setImages] = useState<{image_id: string, url: string, created_at: string, favorite: boolean }[]>([]);
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string, likes: number }[]>([]);
     const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
     const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string, favorite: boolean} | null>(null);
+    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string, likes: number} | null>(null);
     const [followingModal, setFollowingModal] = useState(false);
     const [followerModal, setFollowerModal] = useState(false);
     const [editMode, setEditMode] = useState(false); 
@@ -48,7 +48,7 @@ export default function Profile() {
             try {
 
                 //load images
-                const imagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images`);
+                const imagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images?include_likes=true`);
 
                 if (!imagesResponse.ok) {
                     console.log(imagesResponse.status)
@@ -56,7 +56,7 @@ export default function Profile() {
                 }
 
                 const imagesResult = await imagesResponse.json();
-                setImages(imagesResult.data);
+                setImages(imagesResult.data.map((item: any) => ({...item, likes: item.favorites?.[0]?.count ?? 0})));
                 await getFavorites(); 
 
             } catch (error) {
@@ -426,6 +426,7 @@ export default function Profile() {
                         </div>
                         <div className="flex flex-col gap-2 p-5 w-1/3">
                             <div className="flex items-center justify-between mt-auto">
+                                <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
                                 <Heart filled={favoritedImageIDs.has(selectedImage.image_id)} onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)} />
                             </div>
