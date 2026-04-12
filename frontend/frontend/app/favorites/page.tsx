@@ -16,8 +16,8 @@ export default function Favorites() {
     const router = useRouter();
 
     const [loadingFavorites, setLoadingFavorites] = useState(false);
-    const [favorites, setFavorites] = useState<{username: string, image_id: string, url: string, created_at: string, favorite: boolean }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{username: string, image_id: string, url: string, created_at: string, favorite: boolean } | null>(null);
+    const [favorites, setFavorites] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string }[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string } | null>(null);
 
     useEffect(() => {
         const getFavorites = async () => {
@@ -26,7 +26,7 @@ export default function Favorites() {
 
             try { 
                 setLoadingFavorites(true); 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/favorites`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
                 
                 if (!response.ok) { 
                     console.log(await response.text());
@@ -34,7 +34,15 @@ export default function Favorites() {
                 }
 
                 const result = await response.json(); 
-                setFavorites(result.data); 
+                //destructure and flatten favorites list
+                setFavorites(result.data.map((item: any) => ({                                                                                             
+                    user_id: item.user_id,    
+                    username: item.users.username,                                                                                                 
+                    image_id: item.images.image_id,                                                                                                        
+                    url: item.images.url,                                                                                                                  
+                    created_at: item.images.created_at,                                                                                                            
+                })));    
+                console.log(result.data); 
 
             } catch (error) { 
                 console.error(error); 
@@ -49,13 +57,13 @@ export default function Favorites() {
 
         try { 
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/toggle-favorite`, 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, 
                 {
-                    method: 'PATCH', 
+                    method: 'DELETE', 
                     headers: {
                         "Content-Type": 'application/json' 
                     }, 
-                    body: JSON.stringify({ favorite: false }) 
+                    body: JSON.stringify({ user_id, image_id }) 
                 });
             
             if (!response.ok) { 
@@ -121,7 +129,7 @@ export default function Favorites() {
                         <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
                         <div className="flex items-center justify-between mt-auto">
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                <Heart filled={selectedImage.favorite} onToggle={() => unfavorite(selectedImage.image_id)} />
+                                <Heart filled={true} onToggle={() => unfavorite(selectedImage.image_id)} />
                                 
                                 
                             </div>

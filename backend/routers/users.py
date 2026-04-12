@@ -61,7 +61,7 @@ async def get_user(user_id: str):
 async def get_images(user_id: str):
 
     #query, filter by user_id and fetch image id, url, created_at 
-    query = supabase.table("images").select("image_id, created_at, url, favorite").eq("user_id", user_id).order("created_at", desc=True).execute() 
+    query = supabase.table("images").select("image_id, created_at, url").eq("user_id", user_id).order("created_at", desc=True).execute() 
 
     #return list of json objects with data (such as image url, etc.) 
     #if empty, handle on frontend (user could have no posts) 
@@ -206,10 +206,10 @@ async def get_feed(user_id: str):
         for item in following: 
             following_id = item["following_id"]
 
-            query = supabase.table("images").select("image_id, users!images_user_id_fkey(username), created_at, url, favorite").eq("user_id", following_id).order("created_at", desc=True).execute() 
+            query = supabase.table("images").select("image_id, users!images_user_id_fkey(username), created_at, url").eq("user_id", following_id).order("created_at", desc=True).execute() 
             images = query.data
             for image in images: 
-                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"], "favorite": image["favorite"]}
+                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
                 feed_list.append(image_dict) 
 
         #sort by most recent across all friends 
@@ -251,17 +251,6 @@ async def delete_image(user_id: str, image_id: str):
         }                                                                                                           
     except Exception as e:                                                                                                               
         return {"success": False, "message": str(e)}
-    
-@router.get("/users/{user_id}/favorites")
-async def get_favorites(user_id: str): 
-
-    query = supabase.table("images").select("users!images_user_id_fkey(username), image_id, url, created_at, favorite").eq("user_id", user_id).eq("favorite", True).order("created_at", desc=True).execute() 
-    favorites = query.data 
-
-    return {
-        "success": True, 
-        "data": favorites
-    }
 
 #to load existing rankings page 
 @router.get("/users/{user_id}/rankings") 

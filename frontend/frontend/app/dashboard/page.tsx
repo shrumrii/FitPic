@@ -5,21 +5,26 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
 import { getUser } from "@/lib/getUser";
-import Modal from "@/components/modal"
+import Modal from "@/components/modal"; 
+import { useUser } from "@/context/userContext";
+import Heart from "@/components/Heart";
 
 export default function Dashboard() {
 
-    const router = useRouter();
+    const { username, user_id, loading: userLoading } = useUser() ?? { username: "", user_id: "", loading: false };
     const [loading, setLoading] = useState(false);
-    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, favorite: boolean}[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, favorite: boolean} | null>(null);
+    const router = useRouter();
+    const [feed, setFeed] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string}[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string} | null>(null);
+    const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
+    const [loadingFavorites, setLoadingFavorites] = useState(false);
 
     useEffect(() => {
-        const getUserFeed = async (id: string) => {
+        const getUserFeed = async (user_id: string) => {
 
             try {
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${id}/feed`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed`);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -45,20 +50,13 @@ export default function Dashboard() {
 
         const populateDashboard = async () => {
 
+            if (userLoading || user_id == "") return;
             setLoading(true);
 
             try {
 
-                const user = await getUser();
-
-                if (user == null) {
-                    console.log("Redirect to welcome page");
-                    router.push("/welcome");
-                    return;
-                }
-
                 //check if uid in database
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`);
 
                 if (!response.ok) {
                     console.log(await response.text())
@@ -69,12 +67,11 @@ export default function Dashboard() {
 
                 if (!result.success) {
                     console.log(result.message);
-                    console.log(`${user.id} has made an account, but has not created a profile. Redirecting to onboarding.`);
                     router.push("/onboarding");
                     return;
                 }
 
-                await getUserFeed(user.id);
+                await Promise.all([getUserFeed(user_id), getFavorites(user_id)]);
 
             } catch (error) {
                 console.error("error", error);
@@ -83,39 +80,101 @@ export default function Dashboard() {
                 setLoading(false);
             }
         }
-        populateDashboard();
-    }, [])
 
-    const toggleFavorite = async ( image_id: string) => { 
+        const getFavorites = async (user_id: string) => {
+
+            if (user_id == "") return; 
+
+            try { 
+                setLoadingFavorites(true); 
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
+                
+                if (!response.ok) { 
+                    console.log(await response.text());
+                    throw new Error("Failed to get favorites")
+                }
+
+                const result = await response.json();
+
+                //extract favorited image ids and set to state
+                const favoritedIDs = new Set<string>(result.data.map((item: any) => item.images.image_id));
+                setFavoritedImageIDs(favoritedIDs);
+                console.log("Favorited image IDs:", favoritedIDs);
+
+            } catch (error) { 
+                console.error(error); 
+            } finally { 
+                setLoadingFavorites(false); 
+            }
+        } 
+
+        populateDashboard();
+    }, [userLoading, user_id])
+
+    const setFavorite = async (image_id: string) => { 
 
         try { 
-            //toggle favorite status 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/toggle-favorite`, 
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
-                    method: 'PATCH', 
+                    method: 'POST', 
                     headers: {
                         "Content-Type": 'application/json' 
                     }, 
-                    body: JSON.stringify({ favorite: !selectedImage?.favorite }) 
+                    body: JSON.stringify({ user_id, image_id }) 
                 });
             
             if (!response.ok) { 
-                console.error("Could not toggle favorite");
-                throw new Error("Could not toggle favorite");
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
             }
 
             const result = await response.json(); 
+
             if (!result.success) { 
                 console.log(result.message); 
-                throw new Error("Could not toggle favorite - backend endpoint"); 
+                throw new Error("Could not favorite image - backend endpoint"); 
             }
 
-            // update feed and selected image state 
-            setFeed((prev) => prev.map((item) => item.image_id === image_id ? { ...item, favorite: !item.favorite } : item)); 
-            setSelectedImage((prev) => prev && prev.image_id === image_id ? { ...prev, favorite: !prev.favorite } : prev); 
-            
+            //update favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
 
-        } catch (error) {
+        } catch (error) { 
+            console.error(error); 
+        } 
+    }
+
+    const setUnfavorite = async (image_id: string) => { 
+
+        try { 
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+                {
+                    method: 'DELETE', 
+                    headers: {
+                        "Content-Type": 'application/json' 
+                    }, 
+                    body: JSON.stringify({ user_id, image_id }) 
+                });
+            
+            if (!response.ok) { 
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
+            }
+
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not favorite image - backend endpoint"); 
+            }
+
+            //update favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+
+        } catch (error) { 
             console.error(error); 
         } 
     }
@@ -162,7 +221,7 @@ export default function Dashboard() {
                         <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
                         <div className="flex items-center justify-between mt-auto">
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                {/* <button onClick={() => toggleFavorite(selectedImage.image_id)} className="text-xs text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors"> {selectedImage.favorite ? "Unfavorite" : "Favorite"} </button> */}
+                                <Heart filled={favoritedImageIDs.has(selectedImage.image_id)} onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)} />
                         </div>
                     </div>
                 </div>

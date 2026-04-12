@@ -48,23 +48,3 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         "data": inserted_row, 
         "message": f"Image {image.filename} uploaded."
     }
-
-
-class ToggleFavorite(BaseModel): 
-        favorite: bool 
-
-@router.patch("/images/{image_id}/toggle-favorite")
-async def favorite(image_id: str, favorite_bool: ToggleFavorite): 
-    query = supabase.table("images").update({"favorite": favorite_bool.favorite}).eq("image_id", image_id).execute() 
-    updated_row = query.data[0] if query.data and len(query.data) > 0 else None 
-
-    if not updated_row: 
-        return { 
-            "success": False, 
-            "message": f"Unable to favorite {image_id}"
-        }
-
-    return { 
-        "success": True, 
-        "message": f"Favorited {image_id}" 
-    }

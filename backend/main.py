@@ -6,7 +6,7 @@ from database import supabase #import client from database.py
 from pydantic import BaseModel 
 import uuid 
 
-from routers import users, images 
+from routers import users, images, favorites 
 
 app = FastAPI() 
 
@@ -19,6 +19,7 @@ app.add_middleware(
 
 app.include_router(users.router)
 app.include_router(images.router) 
+app.include_router(favorites.router) 
 
 @app.get("/") 
 async def root(): 

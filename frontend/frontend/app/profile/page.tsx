@@ -8,6 +8,8 @@ import Spinner from "@/components/spinner";
 import { useUser } from "@/context/userContext";
 import Modal from "@/components/modal";
 import ConfirmModal from "@/components/confirmModal"; 
+import Heart from "@/components/Heart";
+import Link from "next/link";
 
 
 export default function Profile() {
@@ -24,6 +26,8 @@ export default function Profile() {
     const [editMode, setEditMode] = useState(false); 
     const [confirmModal, setConfirmModal] = useState(false); 
     const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
+    const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
+    const [loadingFavorites, setLoadingFavorites] = useState(false);
     
 
     const router = useRouter();
@@ -53,11 +57,39 @@ export default function Profile() {
 
                 const imagesResult = await imagesResponse.json();
                 setImages(imagesResult.data);
+                await getFavorites(); 
 
             } catch (error) {
                 console.error(error);
             }
         }
+
+        const getFavorites = async () => {
+
+            if (user_id == "") return; 
+
+            try { 
+                setLoadingFavorites(true); 
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
+                
+                if (!response.ok) { 
+                    console.log(await response.text());
+                    throw new Error("Failed to get favorites")
+                }
+
+                const result = await response.json();
+
+                //extract favorited image ids and set to state
+                const favoritedIDs = new Set<string>(result.data.map((item: any) => item.images.image_id));
+                setFavoritedImageIDs(favoritedIDs);
+                console.log("Favorited image IDs:", favoritedIDs);
+
+            } catch (error) { 
+                console.error(error); 
+            } finally { 
+                setLoadingFavorites(false); 
+            }
+        } 
         getProfileInfo();
     }, [loading, user_id]);
 
@@ -116,6 +148,7 @@ export default function Profile() {
                 username: item.users.username
             })));
             setFollowingModal(true);
+            console.log(result.data); 
 
         } catch (error) {
             console.error(error);
@@ -138,6 +171,7 @@ export default function Profile() {
                 username: item.users.username
             })));
             setFollowerModal(true);
+            console.log(result.data); 
 
         } catch (error) {
             console.error(error);
@@ -174,13 +208,13 @@ export default function Profile() {
 
         try { 
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/toggle-favorite`, 
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
-                    method: 'PATCH', 
+                    method: 'POST', 
                     headers: {
                         "Content-Type": 'application/json' 
                     }, 
-                    body: JSON.stringify({ favorite: !selectedImage?.favorite }) 
+                    body: JSON.stringify({ user_id, image_id }) 
                 });
             
             if (!response.ok) { 
@@ -195,17 +229,50 @@ export default function Profile() {
                 throw new Error("Could not favorite image - backend endpoint"); 
             }
 
-            //update images and selected image state 
-            setImages((prev) => prev.map((item) => item.image_id === image_id ? { ...item, favorite: !item.favorite } : item)); 
-            setSelectedImage((prev) => prev && prev.image_id === image_id ? { ...prev, favorite: !prev.favorite } : prev); 
-
+            //update favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
 
         } catch (error) { 
             console.error(error); 
         } 
     }
 
-    if (loading) return <Spinner/>;
+    const setUnfavorite = async (image_id: string) => { 
+
+        try { 
+
+            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+                {
+                    method: 'DELETE', 
+                    headers: {
+                        "Content-Type": 'application/json' 
+                    }, 
+                    body: JSON.stringify({ user_id, image_id }) 
+                });
+            
+            if (!response.ok) { 
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
+            }
+
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not favorite image - backend endpoint"); 
+            }
+
+            //update favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+
+        } catch (error) { 
+            console.error(error); 
+        } 
+    }
+
+    if (loading || loadingFavorites) return <Spinner/>;
 
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
@@ -314,9 +381,13 @@ export default function Profile() {
                         {followingList.length === 0
                             ? <p className="text-sm text-zinc-400">Not following anyone yet.</p>
                             : <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
+                            
+                            
                                 {followingList.map((user) => (
                                     <div key={user.following_id} className="py-3">
-                                        <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
+                                        <Link href={`/users/${user.following_id}`} className="text-sm font-medium text-black dark:text-white">
+                                            {user.username}
+                                        </Link>
                                     </div>
                                 ))}
                             </div>
@@ -335,7 +406,9 @@ export default function Profile() {
                             : <div className="flex flex-col divide-y divide-zinc-100 dark:divide-zinc-800">
                                 {followerList.map((user) => (
                                     <div key={user.follower_id} className="py-3">
-                                        <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
+                                        <Link href={`/users/${user.follower_id}`} className="text-sm font-medium text-black dark:text-white">
+                                            {user.username}
+                                        </Link>
                                     </div>
                                 ))}
                             </div>
@@ -354,11 +427,7 @@ export default function Profile() {
                         <div className="flex flex-col gap-2 p-5 w-1/3">
                             <div className="flex items-center justify-between mt-auto">
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                <button 
-                                    onClick={() => setFavorite(selectedImage.image_id)} 
-                                    className="text-xs text-zinc-400 hover:text-zinc-600 cursor-pointer transition-colors">
-                                    {selectedImage.favorite ? "Unfavorite" : "Favorite"}
-                                </button>
+                                <Heart filled={favoritedImageIDs.has(selectedImage.image_id)} onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)} />
                             </div>
                         </div>
                     </div>
