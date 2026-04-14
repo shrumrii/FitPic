@@ -80,6 +80,10 @@ export default function Login() {
                         Don&apos;t have an account?{" "}
                         <Link href="/signup" className="text-black dark:text-white font-medium hover:text-amber-400 transition-colors">Sign up</Link>
                     </p>
+                    <p className="text-center text-sm text-zinc-500">
+                        Forgot your password?{" "}
+                        <Link href="/reset-password" className="text-black dark:text-white font-medium hover:text-amber-400 transition-colors">Reset</Link>
+                    </p>
                 </div>
             </main>
         </div>
