@@ -4,8 +4,10 @@ import io
 from database import supabase #import client from database.py 
 from pydantic import BaseModel 
 import uuid 
+from logger import get_logger 
 
 router = APIRouter()
+logger = get_logger(__name__) 
 
 class UserCreate(BaseModel): #modify as needed when i change the users table schema 
         id: str
@@ -13,6 +15,7 @@ class UserCreate(BaseModel): #modify as needed when i change the users table sch
         username: str
         age: int | None = None 
 
+#create user, match supabase auth user creation 
 @router.post("/users/create")
 async def create_user(user: UserCreate): 
     data = { 
@@ -22,39 +25,68 @@ async def create_user(user: UserCreate):
         "age": user.age
         #created timestamp autopopulate in supabase 
     }
+    try: 
+        supabase.table("users").insert(data).execute()
 
-    response = supabase.table("users").insert(data).execute()
-    return {
-        "success": True, 
-        "message": f"User {user.username} created." 
-    }
+        return {
+            "success": True, 
+            "message": f"User {user.username} created." 
+        }
+    except Exception as e: 
+        logger.error(f"Error creating user: {e}")
 
+        return {
+            "success": False, 
+            "message": "Failed to create user."
+        }
+
+#search for username - used for friend search feature
 @router.get("/users/search")
 async def search_username(username: str): 
 
     #query supabase for username 
-    query = supabase.table("users").select("user_id, username").ilike("username", f"%{username}%").execute() 
-    users = query.data 
+    try:
+        #allow partial matches
+        query = supabase.table("users").select("user_id, username").ilike("username", f"%{username}%").execute() 
+        users = query.data 
 
-    return { 
-        "success": True, 
-        "data": users 
-    }
-
-@router.get("/users/{user_id}")
-async def get_user(user_id: str):
-    response = supabase.table("users").select("*").eq("user_id", user_id).execute() 
-    user = response.data[0] if response.data and len(response.data) > 0 else None
-    if user: 
         return { 
             "success": True, 
-            "data": user 
+            "data": users 
         }
-    else: 
+
+    except Exception as e: 
+        logger.error(f"Error searching for username: {e}")
+
         return { 
             "success": False, 
-            "message": "User not found."
+            "message": "Failed to search for username." 
         }
+ 
+#get user by id, used widely across app
+@router.get("/users/{user_id}")
+async def get_user(user_id: str):
+
+    try: 
+        response = supabase.table("users").select("*").eq("user_id", user_id).execute() 
+        user = response.data[0] if response.data and len(response.data) > 0 else None
+    
+        if user: 
+            return { 
+                "success": True, 
+                "data": user 
+            }
+        else: 
+            return { 
+                "success": False, 
+                "message": "User not found."
+            }
+    except Exception as e:  
+        logger.error(f"Failed to get user: {e}")
+        return { 
+                "success": False, 
+                "message": "Failed to get user."
+            }
 
 #get all images from specific user 
 @router.get("/users/{user_id}/images")
@@ -66,16 +98,21 @@ async def get_images(user_id: str, include_likes: bool = False):
     else: 
         select = "image_id, created_at, url"
 
-    #query, filter by user_id and fetch image id, url, created_at 
-    query = supabase.table("images").select(select).eq("user_id", user_id).order("created_at", desc=True).execute() 
+    try: 
+        query = supabase.table("images").select(select).eq("user_id", user_id).order("created_at", desc=True).execute() 
 
-    #return list of json objects with data (such as image url, etc.) 
-    #if empty, handle on frontend (user could have no posts) 
-    return { 
+        return { 
         "success": True, 
         "data": query.data
-    }
+        }
+    except Exception as e: 
+        logger.error(f"Failed to get images from {user_id}: {e}.")
+        return { 
+            "success": False, 
+            "message": f"Failed to get images."
+        }
 
+#change user's pfp (profile page) 
 @router.post("/users/{user_id}/pfp")
 async def upload_pfp(user_id: str, image: UploadFile = File(...)): 
     
@@ -86,54 +123,62 @@ async def upload_pfp(user_id: str, image: UploadFile = File(...)):
             "message": "Not a valid file type. Please use JPEG or PNG"
         }
     
-    #check old pfp (if exists) 
-    old_pfp_filename = ""
-    pfp_check_query = supabase.table("users").select("pfp_url").eq("user_id", user_id).execute()
-    if pfp_check_query.data and pfp_check_query.data[0].get("pfp_url"): 
-        old_pfp_filename = pfp_check_query.data[0].get("pfp_url").split("/")[-1]
+    try: 
+        #check old pfp (if exists) 
+        old_pfp_filename = ""
+        pfp_check_query = supabase.table("users").select("pfp_url").eq("user_id", user_id).execute()
+        if pfp_check_query.data and pfp_check_query.data[0].get("pfp_url"): 
+            old_pfp_filename = pfp_check_query.data[0].get("pfp_url").split("/")[-1]
 
-    contents = await image.read() 
-    #compress img 
-    img = Image.open(io.BytesIO(contents))
-    img.thumbnail((1920, 1920)) 
-    img_io = io.BytesIO()
-    img.save(img_io, format=img.format or "JPEG", quality=85, optimize=True)
-    img_io.seek(0) 
-    contents = img_io.read() 
+        contents = await image.read() 
+        #compress img 
+        img = Image.open(io.BytesIO(contents))
+        img.thumbnail((1920, 1920)) 
+        img_io = io.BytesIO()
+        img.save(img_io, format=img.format or "JPEG", quality=85, optimize=True)
+        img_io.seek(0) 
+        contents = img_io.read() 
 
-    clean_filename = image.filename.replace(" ", "_") 
-    unique_filename = f"{user_id}_{clean_filename}"
-    #upload to supabase storage (profile-pictures) - wrap in try catch finally so that it doesnt update database when upload to storage fails 
-    upload = supabase.storage.from_("profile-pictures").upload(
-        unique_filename, 
-        contents, 
-        file_options={"content-type": image.content_type}
-    )
-    image_url = supabase.storage.from_("profile-pictures").get_public_url(unique_filename) 
-    
-    #upload successful, remove old pfp 
-    if old_pfp_filename: 
-        supabase.storage.from_("profile-pictures").remove([old_pfp_filename])
+        clean_filename = image.filename.replace(" ", "_") 
+        unique_filename = f"{user_id}_{clean_filename}"
+        #upload to supabase storage (profile-pictures) - wrap in try catch finally so that it doesnt update database when upload to storage fails 
+        upload = supabase.storage.from_("profile-pictures").upload(
+            unique_filename, 
+            contents, 
+            file_options={"content-type": image.content_type}
+        )
+        image_url = supabase.storage.from_("profile-pictures").get_public_url(unique_filename) 
+        
+        #upload successful, remove old pfp 
+        if old_pfp_filename: 
+            supabase.storage.from_("profile-pictures").remove([old_pfp_filename])
 
-    #update users row 
-    query = supabase.table("users").update({"pfp_url": image_url}).eq("user_id", user_id).execute()
-    updated_row = query.data[0] if query.data and len(query.data) > 0 else None
+        #update users row 
+        query = supabase.table("users").update({"pfp_url": image_url}).eq("user_id", user_id).execute()
+        updated_row = query.data[0] if query.data and len(query.data) > 0 else None
 
-    if not updated_row:                                                                                                                        
+        if not updated_row:                                                                                                                        
+            return {
+                "success": False, 
+                "message": "User not found"
+            }
+        
+        return { 
+            "success": True, 
+            "updated_row": updated_row, 
+            "message": "Profile picture updated"
+        }
+    except Exception as e: 
+        logger.error(f"Failed to change profile picture for {user_id}: {e}")
         return {
             "success": False, 
-            "message": "User not found"
+            "message": "Failed to change profile picture" 
         }
 
-    return { 
-        "success": True, 
-        "updated_row": updated_row, 
-        "message": "Profile picture updated"
-    }
+class AddFollower(BaseModel): 
+    following_id: str
 
-class AddFollower(BaseModel): #modify as needed when i change the users table schema 
-        following_id: str
-
+#follow another user, follower_id is user 
 @router.post("/users/{follower_id}/follow")
 async def add_follower(follower_id: str, following: AddFollower): 
 
@@ -142,21 +187,30 @@ async def add_follower(follower_id: str, following: AddFollower):
         "following_id": following.following_id
     }
 
-    #add to follows table 
-    response = supabase.table("follows").insert(data).execute() 
-    inserted_row = response.data[0] if response.data and len(response.data) > 0 else None
+    try: 
 
-    if not inserted_row: 
+        #add to follows table 
+        response = supabase.table("follows").insert(data).execute() 
+        inserted_row = response.data[0] if response.data and len(response.data) > 0 else None
+
+        if not inserted_row: 
+            return { 
+                "success": False, 
+                "message": "Failed to follow user."
+            }
+        
+        return { 
+            "success": True, 
+            "data": inserted_row
+        }
+    except Exception as e: 
+        logger.error(f"User {follower_id} failed to add {following} as a follower: {e}")
         return { 
             "success": False, 
             "message": "Failed to add row to follows database"
         }
-    
-    return { 
-        "success": True, 
-        "data": inserted_row
-    }
 
+#unfollow user 
 @router.delete("/users/{follower_id}/unfollow/{following_id}")
 async def remove_follower(follower_id: str, following_id: str): 
 
@@ -165,9 +219,10 @@ async def remove_follower(follower_id: str, following_id: str):
 
         return { 
             "success": True, 
-            "message": f"Successfully unfollowed {following_id}"
+            "message": f"Successfully unfollowed."
         }
     except Exception as e:
+        logger.error(f"User {follower_id} failed to remove {following_id} as follower: {e}")
         return { 
             "success": False, 
             "message": "Failed to remove follower"
@@ -177,27 +232,41 @@ async def remove_follower(follower_id: str, following_id: str):
 @router.get("/users/{user_id}/following")
 async def get_following(user_id: str): 
 
-    #joining users and follows table to get username based on following_id 
-    query = supabase.table("follows").select("following_id, users!follows_following_id_fkey(username)").eq("follower_id", user_id).execute() 
-    following = query.data 
+    try: 
+        #joining users and follows table to get following 
+        query = supabase.table("follows").select("following_id, users!follows_following_id_fkey(username)").eq("follower_id", user_id).execute() 
+        following = query.data 
 
-    return {
-        "success": True, 
-        "data": following
-    }
+        return {
+            "success": True, 
+            "data": following
+        }
+    except Exception as e: 
+        logger.error(f"User {user_id} failed to get following: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get following."
+        }
 
 #get list of followers 
 @router.get("/users/{user_id}/followers")
 async def get_followers(user_id: str): 
 
-    #joining users and follows table to get username based on following_id 
-    query = supabase.table("follows").select("follower_id, users!follows_follower_id_fkey(username)").eq("following_id", user_id).execute() 
-    followers = query.data 
+    try: 
+        #joining users and follows table to get followed usernames 
+        query = supabase.table("follows").select("follower_id, users!follows_follower_id_fkey(username)").eq("following_id", user_id).execute() 
+        followers = query.data 
 
-    return {
-        "success": True, 
-        "data": followers
-    }
+        return {
+            "success": True, 
+            "data": followers
+        }
+    except Exception as e: 
+        logger.error(f"User {user_id} failed to get list of followers: {e}")
+        return {
+            "success": False, 
+            "message": "Failed to get followers."
+        }
 
 #get user feed, essentially combine /following and /images endpoints 
 @router.get("/users/{user_id}/feed")
@@ -229,11 +298,13 @@ async def get_feed(user_id: str, include_likes: bool = False):
             "data": feed_list
         }
     except Exception as e: 
+        logger.error(f"Failed to get {user_id} feed: {e}")
         return { 
             "success": False, 
-            "message": str(e) 
+            "message": "Failed to get feed."
         }
     
+#delete user's image 
 @router.delete("/users/{user_id}/images/{image_id}")
 async def delete_image(user_id: str, image_id: str): 
 
@@ -256,22 +327,32 @@ async def delete_image(user_id: str, image_id: str):
 
         return {
             "success": True,
-            "message": f"Successfully deleted {image_id}"
+            "message": f"Successfully deleted image."
         }                                                                                                           
-    except Exception as e:                                                                                                               
-        return {"success": False, "message": str(e)}
+    except Exception as e:  
+        logger.error(f"User {user_id} failed to delete {image_id}: {e}")                                                                                                             
+        return {
+            "success": False, 
+            "message": "Failed to delete image."
+        }
 
-#to load existing rankings page 
+#load existing rankings page 
 @router.get("/users/{user_id}/rankings") 
 async def get_rankings(user_id: str): 
+    try: 
+        query = supabase.table("rankings").select("*, images(url)").eq("user_id", user_id).order("rank", desc=True).execute()
+        rankings = query.data 
 
-    query = supabase.table("rankings").select("*, images(url)").eq("user_id", user_id).order("rank", desc=True).execute()
-    rankings = query.data 
-
-    return { 
-        "success": True, 
-        "data": rankings
-    }
+        return { 
+            "success": True, 
+            "data": rankings
+        }
+    except Exception as e: 
+        logger.error(f"Failed to get personal rankings for {user_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get rankings"
+        }
 
 class Ranking(BaseModel): 
     image_id: str 
@@ -305,8 +386,8 @@ async def save_rankings(user_id: str, rankings: RankingList):
             "message": "Rankings saved successfully"
         }
     except Exception as e:
-
+        logger.error(f"Failed to save new personal rankings for {user_id}: {e}")
         return { 
             "success": False, 
-            "message": str(e) 
+            "message": "Failed to save rankings" 
         }

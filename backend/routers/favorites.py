@@ -4,20 +4,29 @@ import io
 from database import supabase #import client from database.py 
 from pydantic import BaseModel 
 import uuid 
+from logger import get_logger 
 
 router = APIRouter() 
+logger = get_logger(__name__) 
 
 #get user's favorited images 
 @router.get("/favorites")
 async def get_favorites(user_id: str): 
 
-    query = supabase.table("favorites").select("user_id, users!favorites_user_id_fkey(username), images!favorites_image_id_fkey(image_id, url, created_at)").eq("user_id", user_id).order("created_at", desc=True).execute()
-    favorites = query.data 
+    try: 
+        query = supabase.table("favorites").select("user_id, users!favorites_user_id_fkey(username), images!favorites_image_id_fkey(image_id, url, created_at)").eq("user_id", user_id).order("created_at", desc=True).execute()
+        favorites = query.data 
 
-    return {
-        "success": True, 
-        "data": favorites
-    }
+        return {
+            "success": True, 
+            "data": favorites
+        }
+    except Exception as e: 
+        logger.error(f"Failed to get favorites for {user_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get favorites."
+        }
 
 class Favorite(BaseModel): 
     user_id: str 
@@ -33,18 +42,25 @@ async def add_favorite(favorite: Favorite):
     }
 
     try: 
-
         response = supabase.table("favorites").insert(data).execute() 
+
+        if not response.data: 
+            return { 
+                "success": False, 
+                "message": "Failed to favorite image."
+            }
+
         return {
             "success": True, 
             "data": response.data, 
-            "message": f"Image {favorite.image_id} favorited by user {favorite.user_id}."
+            "message": f"Image favorited."
         }
 
     except Exception as e: 
+        logger.error(f"Failed to favorite {favorite.image_id} for {favorite.user_id}: {e}")
         return {
             "success": False, 
-            "message": str(e)
+            "message": "Failed to favorite image."
         }
     
 #unfavorite an image
@@ -56,13 +72,14 @@ async def delete_favorite(favorite: Favorite):
         return {
             "success": True, 
             "data": response.data, 
-            "message": f"Image {favorite.image_id} unfavorited by user {favorite.user_id}."
+            "message": f"Image unfavorited."
         }
 
     except Exception as e: 
+        logger.error(f"Failed to unfavorite {favorite.image_id} for {favorite.user_id}: {e}")
         return {
             "success": False, 
-            "message": str(e)
+            "message": "Failed to unfavorite image."
         }
 
 
