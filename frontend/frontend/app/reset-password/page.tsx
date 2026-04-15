@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,9 @@ export default function ResetPassword() {
     const [error, setError] = useState("");
     const [email, setEmail] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+
+    const errorTimeout = useRef<NodeJS.Timeout | null>(null);
+    
 
     const enterEmail = (e: React.ChangeEvent<HTMLInputElement>) => { 
         setError(""); 
@@ -23,6 +26,8 @@ export default function ResetPassword() {
         //check if email is valid/not empty 
         if (!email) { 
             setError("Please enter your email");
+            if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+            errorTimeout.current = setTimeout(() => setError(""), 5000);
             return;
         }
 
@@ -33,6 +38,9 @@ export default function ResetPassword() {
 
             if (error) { 
                 setError(error.message);
+                //clear error after 5 seconds, being mindful of multiple errors overriding each other 
+                if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+                errorTimeout.current = setTimeout(() => setError(""), 5000);
                 console.error("Error sending reset password email", error);
                 return;
             } else { 
@@ -40,6 +48,9 @@ export default function ResetPassword() {
             }
 
         } catch (error) { 
+            setError("Something went wrong. Please try again.");                                                                                   
+            if (errorTimeout.current) clearTimeout(errorTimeout.current);                                                                          
+            errorTimeout.current = setTimeout(() => setError(""), 5000);
             console.error("Error sending reset password email", error);
         } finally { 
             setLoading(false);

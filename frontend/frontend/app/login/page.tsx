@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -9,6 +9,7 @@ export default function Login() {
     const [formData, setFormData] = useState({ email: "", password: "" }); //const [email, setEmail] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    const errorTimeout = useRef<NodeJS.Timeout | null>(null);
     const router = useRouter();
 
     const setEmailPassword = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -23,6 +24,8 @@ export default function Login() {
         //empty fields
         if (!formData.email || !formData.password) {
             setError("Please fill in all fields");
+            if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+            errorTimeout.current = setTimeout(() => setError(""), 5000);
             setLoading(false);
             return;
         }
@@ -34,6 +37,8 @@ export default function Login() {
             if (error) {  //supabase error
                 console.error(error.message);
                 setError(error.message);
+                if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+                errorTimeout.current = setTimeout(() => setError(""), 5000);
                 return
             }
 

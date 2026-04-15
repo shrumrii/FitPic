@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import supabase from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -10,6 +10,7 @@ export default function UpdatePassword() {
     const [error, setError] = useState("");
     const [password, setPassword] = useState("");
     const [successMessage, setSuccessMessage] = useState("");
+    const errorTimeout = useRef<NodeJS.Timeout | null>(null); 
     const router = useRouter(); 
 
     const enterPassword = (e: React.ChangeEvent<HTMLInputElement>) => { 
@@ -24,6 +25,8 @@ export default function UpdatePassword() {
         //check if email is valid/not empty 
         if (!password) { 
             setError("Please enter a valid (for now) password");
+            if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+            errorTimeout.current = setTimeout(() => setError(""), 5000);
             return;
         }
 
@@ -33,6 +36,9 @@ export default function UpdatePassword() {
 
             if (error) { 
                 setError(error.message);
+                //clear error after 5 seconds, being mindful of multiple errors overriding each other 
+                if (errorTimeout.current) clearTimeout(errorTimeout.current); 
+                errorTimeout.current = setTimeout(() => setError(""), 5000);
                 console.error("Error sending reset password email", error);
                 return;
             } else { 

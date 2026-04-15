@@ -7,9 +7,9 @@ import { getUser } from "@/lib/getUser";
 
 export default function UploadPage() {
 
-    const [selectedFile, setSelectedFile] = useState<File | null>(null); //typescript generic, initially null, but HAS TO be a File object when a file is selected
+    const [selectedFiles, setSelectedFiles] = useState<File[]>([]); //typescript generic, initially null, but HAS TO be a File object when a file is selected
     const [uploading, setUploading] = useState(false);
-    const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);
+    const [uploadedImages, setUploadedImages] = useState<{ url: string, id: string }[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [successMessage, setSuccessMessage] = useState("");
     const [userID, setUserID] = useState("");
@@ -39,45 +39,47 @@ export default function UploadPage() {
 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setSelectedFile(e.target.files[0]);
+            setSelectedFiles(Array.from(e.target.files));
         }
     };
 
     const handleUpload = async () => {
-        if (!selectedFile) return;
+        if (!selectedFiles) return;
         setUploading(true);
         setSuccessMessage("");
 
-        const formData = new FormData();
-        formData.append("image", selectedFile);
+        for (const file of selectedFiles) { 
+            const formData = new FormData();
+            formData.append("image", file);
+            
 
-        //response
-        try {
+            try {
 
-            formData.append("user_id", userID);
+                formData.append("user_id", userID);
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
-                method: "POST",
-                body: formData
-            })
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
+                    method: "POST",
+                    body: formData
+                })
 
-            if (!response.ok) { //server
-                console.log(await response.text())
-                throw new Error("Upload failed");
+                if (!response.ok) { //server
+                    console.log(await response.text())
+                    throw new Error("Upload failed");
+                }
+
+                const result = await response.json(); //backend check
+                if (result.success) {
+                    setUploadedImages(prev => [...prev, { url: result.data.url, id: result.data.image_id }]);
+                    console.log("Successfully uploaded image", result.data.url);
+                }
+
+            } catch (error) {
+                console.error("Upload failed", error);
+                alert("Upload failed. Please try again.");
             }
-
-            const result = await response.json(); //backend check
-            if (result.success) {
-                setUploadedImage(result.data);
-                setSuccessMessage("Successfully uploaded!");
-            }
-
-        } catch (error) {
-            console.error("Upload failed", error);
-            alert("Upload failed. Please try again.");
-        } finally {
-            setUploading(false);
-        }
+        } 
+        setUploading(false);
+        setSuccessMessage("All images uploaded successfully!");
     };
 
     return (
@@ -95,6 +97,7 @@ export default function UploadPage() {
                     ref={fileInputRef}
                     onChange={fileChange}
                     className="hidden"
+                    multiple 
                 />
 
                 {/* upload zone */}
@@ -102,12 +105,15 @@ export default function UploadPage() {
                     className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-4 py-14 px-6 cursor-pointer hover:border-amber-400 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                 >
-                    {selectedFile ? (
-                        <div className="flex flex-col items-center gap-3 w-full">
-                            <div className="rounded-lg overflow-hidden w-full">
-                                <Image src={URL.createObjectURL(selectedFile)} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
-                            </div>
-                            <p className="text-sm text-zinc-500">{selectedFile.name}</p>
+
+
+                    {selectedFiles.length > 0 ? (
+                        <div className="grid grid-cols-3 gap-2 w-full">
+                            {selectedFiles.map((img, index) => (
+                                <div key={index} className="rounded-lg overflow-hidden w-full">
+                                    <Image src={URL.createObjectURL(img)} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
+                                </div>
+                            ))}
                         </div>
                     ) : (
                         <>
@@ -117,19 +123,30 @@ export default function UploadPage() {
                     )}
                 </div>
 
-                {selectedFile && (
+                {selectedFiles.length > 0 && (
                     <button
                         className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
                         onClick={handleUpload}
-                        disabled={!selectedFile || uploading || !!uploadedImage}
+                        disabled={!selectedFiles || uploading || uploadedImages.length > 0}
                     >
                         {uploading ? "Uploading..." : "Upload"}
                     </button>
                 )}
-
+                
                 {successMessage && (
-                    <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
+                    <>
+                        <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
+
+                        <div className="grid grid-cols-1 gap-2 w-full"> 
+                            {uploadedImages.map((img) => (
+                                <div key={img.id} className="rounded-lg overflow-hidden w-full">
+                                    <Image src={img.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
+                                </div>
+                            ))}
+                        </div>  
+                    </>
                 )}
+
             </main>
         </div>
     );
