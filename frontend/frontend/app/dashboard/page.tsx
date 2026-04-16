@@ -18,6 +18,7 @@ export default function Dashboard() {
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
     const [loadingFavorites, setLoadingFavorites] = useState(false);
     const [fetched, setFetched] = useState(false);
+    const [dashboardError, setDashboardError] = useState("");
 
     useEffect(() => {
         const getUserFeed = async (user_id: string) => {
@@ -54,27 +55,12 @@ export default function Dashboard() {
 
             try {
 
-                //check if uid in database
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`);
-
-                if (!response.ok) {
-                    console.log(await response.text())
-                    throw new Error("Failed to get user id");
-                }
-
-                const result = await response.json();
-
-                if (!result.success) {
-                    console.log(result.message);
-                    router.push("/onboarding");
-                    return;
-                }
-
                 await Promise.all([getUserFeed(user_id), getFavorites(user_id)]);
 
             } catch (error) {
                 console.error("error", error);
-                router.push("/welcome")
+                //show dashboard error  
+                setDashboardError('Failed to load feed. Try refreshing the page.')
             } finally {
                 setFetched(true); 
             }
@@ -99,7 +85,8 @@ export default function Dashboard() {
                 console.log("Favorited image IDs:", favoritedIDs);
 
             } catch (error) { 
-                console.error(error); 
+                console.error(error);
+
             } finally { 
                 setLoadingFavorites(false); 
             }
@@ -205,6 +192,8 @@ export default function Dashboard() {
                         ))}
                     </div>
                 }
+
+                {dashboardError && <p className="text-xs text-red-500">{dashboardError}</p>}
 
             </main>
 

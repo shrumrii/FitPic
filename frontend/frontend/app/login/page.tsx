@@ -33,6 +33,7 @@ export default function Login() {
         try {
             //supabase
             const { data, error } = await supabase.auth.signInWithPassword({ email: formData.email, password: formData.password })
+            console.log(data); 
 
             if (error) {  //supabase error
                 console.error(error.message);
@@ -42,7 +43,7 @@ export default function Login() {
                 return
             }
 
-            router.push("/"); //redirect to root
+            router.push("/dashboard"); //redirect to root
 
         } catch (error) {
             console.error("Login failed", error);
