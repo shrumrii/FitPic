@@ -27,8 +27,7 @@ export default function Profile() {
     const [confirmModal, setConfirmModal] = useState(false); 
     const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
-    const [loadingFavorites, setLoadingFavorites] = useState(false);
-    
+    const [fetched, setFetched] = useState(false);
 
     const router = useRouter();
 
@@ -61,6 +60,8 @@ export default function Profile() {
 
             } catch (error) {
                 console.error(error);
+            } finally { 
+                setFetched(true); 
             }
         }
 
@@ -69,7 +70,6 @@ export default function Profile() {
             if (user_id == "") return; 
 
             try { 
-                setLoadingFavorites(true); 
                 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
                 
                 if (!response.ok) { 
@@ -86,9 +86,7 @@ export default function Profile() {
 
             } catch (error) { 
                 console.error(error); 
-            } finally { 
-                setLoadingFavorites(false); 
-            }
+            } 
         } 
         getProfileInfo();
     }, [loading, user_id]);
@@ -272,7 +270,7 @@ export default function Profile() {
         } 
     }
 
-    if (loading || loadingFavorites) return <Spinner/>;
+    if (!fetched) return <Spinner/>;
 
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
