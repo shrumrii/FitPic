@@ -9,6 +9,10 @@ logging.basicConfig(
     ]
 )
 
+logging.getLogger("uvicorn").setLevel(logging.ERROR)
+logging.getLogger("uvicorn.error").setLevel(logging.ERROR)                                                                                 
+logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
+
 #request logger
 request_logger = logging.getLogger("requests")                                                                                             
 request_logger.setLevel(logging.INFO)                                                                                                      

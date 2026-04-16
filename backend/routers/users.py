@@ -284,6 +284,7 @@ async def get_feed(user_id: str, include_likes: bool = False):
             select = "image_id, users!images_user_id_fkey(username), created_at, url, favorites!favorites_image_id_fkey(count)" if include_likes else "image_id, users!images_user_id_fkey(username), created_at, url"
             query = supabase.table("images").select(select).eq("user_id", following_id).order("created_at", desc=True).execute()
             images = query.data
+            print(images) 
             for image in images:
                 image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
                 if include_likes:

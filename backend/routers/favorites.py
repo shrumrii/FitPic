@@ -9,7 +9,7 @@ from logger import get_logger
 router = APIRouter() 
 logger = get_logger(__name__) 
 
-#get user's favorited images 
+#get user's favorited images, add user_id param 
 @router.get("/favorites")
 async def get_favorites(user_id: str): 
 

@@ -24,7 +24,7 @@ export default function Dashboard() {
 
             try {
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed`);
+                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed?include_likes=true`);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -38,7 +38,8 @@ export default function Dashboard() {
                 }
 
                 const feed = result.data;
-                setFeed(feed.map((item: any) => ({...item, likes: item.favorites?.[0]?.count ?? 0})));
+                console.log(feed); 
+                setFeed(feed); 
 
             } catch (error) {
                 console.error(error);
