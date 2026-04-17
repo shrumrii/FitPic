@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { getUser } from "@/lib/getUser";
+import { loggedFetch } from "@/lib/api";
 
 export default function Onboarding() {
 
@@ -55,11 +56,11 @@ export default function Onboarding() {
             }
 
             //combine with form data and send to backend
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/create`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/create`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ ...formData, age: formData.age === "" ? null : Number(formData.age), id: user.id, email: user.email })
-            })
+            }, user.id)
             //age overrwriten after spreading formData if called again. if age is empty, send null, else convert to number.
 
             if (!response.ok) {

@@ -8,6 +8,7 @@ import { useUser } from "@/context/userContext";
 import Modal from "@/components/modal";
 import Heart from "@/components/Heart";
 import Link from "next/link";
+import { loggedFetch } from "@/lib/api";
 
 
 export default function Profile() {
@@ -41,7 +42,7 @@ export default function Profile() {
             if (!target_user_id) return;
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}`, undefined, logged_user_id);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -70,7 +71,7 @@ export default function Profile() {
 
         const getProfileFeed = async () => {
             try {
-                const imagesResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/images`);
+                const imagesResponse = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/images`, undefined, logged_user_id);
 
                 if (!imagesResponse.ok) {
                     console.log(imagesResponse.status)
@@ -89,7 +90,7 @@ export default function Profile() {
             if (!logged_user_id) return;
 
             try {
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${logged_user_id}`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${logged_user_id}`, undefined, logged_user_id);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -110,7 +111,7 @@ export default function Profile() {
 
     const getFollowing = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/following`);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/following`, undefined, logged_user_id);
 
             if (!response.ok) {
                 console.error("Could not get following");
@@ -131,7 +132,7 @@ export default function Profile() {
 
     const getFollowers = async () => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/followers`);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/followers`, undefined, logged_user_id);
 
             if (!response.ok) {
                 console.error("Could not get followers");
@@ -152,11 +153,11 @@ export default function Profile() {
 
     const addFavorite = async (image_id: string) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
                 method: 'POST',
                 headers: { "Content-Type": 'application/json' },
                 body: JSON.stringify({ user_id: logged_user_id, image_id })
-            });
+            }, logged_user_id);
 
             if (!response.ok) throw new Error("Could not favorite image");
 
@@ -172,11 +173,11 @@ export default function Profile() {
 
     const removeFavorite = async (image_id: string) => {
         try {
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
                 method: 'DELETE',
                 headers: { "Content-Type": 'application/json' },
                 body: JSON.stringify({ user_id: logged_user_id, image_id })
-            });
+            }, logged_user_id);
 
             if (!response.ok) throw new Error("Could not unfavorite image");
 

@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
 import { useUser } from "@/context/userContext";
+import { loggedFetch } from "@/lib/api";
 
 
 export default function Rankings() {
@@ -24,7 +25,7 @@ export default function Rankings() {
 
             try { 
                 setLoadingRankings(true); 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, undefined, user_id);
 
                 if (!response.ok) { 
                     console.log(await response.text());

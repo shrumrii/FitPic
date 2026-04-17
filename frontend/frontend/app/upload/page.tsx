@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { getUser } from "@/lib/getUser";
+import { loggedFetch } from "@/lib/api";
 
 export default function UploadPage() {
 
@@ -57,10 +58,10 @@ export default function UploadPage() {
 
                 formData.append("user_id", userID);
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
                     method: "POST",
                     body: formData
-                })
+                }, userID)
 
                 if (!response.ok) { //server
                     console.log(await response.text())

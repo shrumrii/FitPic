@@ -2,6 +2,7 @@
 import { useRouter } from "next/navigation";
 import supabase from "@/lib/supabase";
 import { useState, useEffect } from "react";
+import { loggedFetch } from "@/lib/api";
 
 export default function Home() { 
 
@@ -26,7 +27,7 @@ export default function Home() {
                     return; 
                 } 
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`); 
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, undefined, user.id);
                 const result = await response.json();
 
                 if (result.success) { 

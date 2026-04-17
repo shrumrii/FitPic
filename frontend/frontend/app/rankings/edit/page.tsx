@@ -10,7 +10,8 @@ import {DragDropProvider} from '@dnd-kit/react';
 import SortableItem from "@/components/SortableItem";
 import Draggable from "@/components/Draggable"; 
 import Droppable from "@/components/Droppable"; 
-import {arrayMove} from '@dnd-kit/helpers'; 
+import {arrayMove} from '@dnd-kit/helpers';
+import { loggedFetch } from "@/lib/api";
 
 
 export default function Rankings() {
@@ -34,9 +35,9 @@ export default function Rankings() {
 
             try { 
                 setLoadingRankings(true); 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, undefined, user_id);
 
-                if (!response.ok) { 
+                if (!response.ok) {
                     console.log(await response.text());
                     throw new Error("Failed to get rankings")
                 }
@@ -71,7 +72,7 @@ export default function Rankings() {
             try { 
                 setLoadingUnranked(true);
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images`, undefined, user_id);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -109,7 +110,7 @@ export default function Rankings() {
     const saveRankings = async () => { 
         try { 
             setSaving(true); 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -117,7 +118,7 @@ export default function Rankings() {
                 body: JSON.stringify({
                     rankings: rankings.map(r => ({ image_id: r.image_id, rank: r.rank }))
                 })
-            });
+            }, user_id);
 
             if (!response.ok) {
                 console.log(await response.text());

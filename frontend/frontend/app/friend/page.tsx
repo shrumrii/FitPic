@@ -3,6 +3,7 @@ import Navbar from "@/components/navbar"
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "@/lib/getUser";
+import { loggedFetch } from "@/lib/api";
 
 
 export default function Friend() {
@@ -32,7 +33,7 @@ export default function Friend() {
 
                 setUserID(user.id);
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/following`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/following`, undefined, user.id);
 
                 if (!response.ok) {
                     console.log(await response.text())
@@ -56,7 +57,7 @@ export default function Friend() {
 
         try {
             setLoading(true); 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search?username=${usernameSearchString}`);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search?username=${usernameSearchString}`, undefined, userID);
 
             if (!response.ok) {
                 console.log(await response.text())
@@ -80,11 +81,11 @@ export default function Friend() {
 
         try {
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/follow`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/follow`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ following_id: followingID })
-            });
+            }, userID);
 
             if (!response.ok) {
                 console.log(await response.text())
@@ -114,9 +115,9 @@ export default function Friend() {
     const removeFriend = async (followingID: string) => {
 
         try { 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/unfollow/${followingID}`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/unfollow/${followingID}`, {
                 method: "DELETE"
-            }); 
+            }, userID);
 
             if (!response.ok) {
                 console.log(await response.text());

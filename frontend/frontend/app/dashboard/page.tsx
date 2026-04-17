@@ -8,6 +8,7 @@ import { getUser } from "@/lib/getUser";
 import Modal from "@/components/modal"; 
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
+import { loggedFetch } from "@/lib/api";
 
 export default function Dashboard() {
 
@@ -19,13 +20,14 @@ export default function Dashboard() {
     const [loadingFavorites, setLoadingFavorites] = useState(false);
     const [fetched, setFetched] = useState(false);
     const [dashboardError, setDashboardError] = useState("");
+    const [filterMode, setFilterMode] = useState("recent"); 
 
     useEffect(() => {
         const getUserFeed = async (user_id: string) => {
 
             try {
 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed?include_likes=true`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed?mode=${filterMode}`, undefined, user_id);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -70,7 +72,7 @@ export default function Dashboard() {
 
             try { 
                 setLoadingFavorites(true); 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`, undefined, user_id);
                 
                 if (!response.ok) { 
                     console.log(await response.text());
@@ -93,20 +95,20 @@ export default function Dashboard() {
         } 
 
         populateDashboard();
-    }, [user_id, loading])
+    }, [user_id, loading, filterMode])
 
     const setFavorite = async (image_id: string) => { 
 
         try { 
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
-                    method: 'POST', 
+                    method: 'POST',
                     headers: {
-                        "Content-Type": 'application/json' 
-                    }, 
-                    body: JSON.stringify({ user_id, image_id }) 
-                });
+                        "Content-Type": 'application/json'
+                    },
+                    body: JSON.stringify({ user_id, image_id })
+                }, user_id);
             
             if (!response.ok) { 
                 console.error("Could not favorite image"); 
@@ -133,14 +135,14 @@ export default function Dashboard() {
 
         try { 
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
-                    method: 'DELETE', 
+                    method: 'DELETE',
                     headers: {
-                        "Content-Type": 'application/json' 
-                    }, 
-                    body: JSON.stringify({ user_id, image_id }) 
-                });
+                        "Content-Type": 'application/json'
+                    },
+                    body: JSON.stringify({ user_id, image_id })
+                }, user_id);
             
             if (!response.ok) { 
                 console.error("Could not favorite image"); 

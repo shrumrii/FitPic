@@ -270,7 +270,7 @@ async def get_followers(user_id: str):
 
 #get user feed, essentially combine /following and /images endpoints 
 @router.get("/users/{user_id}/feed")
-async def get_feed(user_id: str, include_likes: bool = False):
+async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent"):
 
     feed_list = [] 
     try: 
@@ -281,7 +281,11 @@ async def get_feed(user_id: str, include_likes: bool = False):
         for item in following: 
             following_id = item["following_id"]
 
-            select = "image_id, users!images_user_id_fkey(username), created_at, url, favorites!favorites_image_id_fkey(count)" if include_likes else "image_id, users!images_user_id_fkey(username), created_at, url"
+            if include_likes: 
+                select = "image_id, users!images_user_id_fkey(username), created_at, url, favorites!favorites_image_id_fkey(count)"
+            else: 
+                select = "image_id, users!images_user_id_fkey(username), created_at, url"
+
             query = supabase.table("images").select(select).eq("user_id", following_id).order("created_at", desc=True).execute()
             images = query.data
             print(images) 
@@ -291,8 +295,11 @@ async def get_feed(user_id: str, include_likes: bool = False):
                     image_dict["likes"] = image["favorites"][0]["count"] if image.get("favorites") else 0
                 feed_list.append(image_dict)
 
-        #sort by most recent across all friends 
-        feed_list.sort(key=lambda x: x["created_at"], reverse=True)
+        #sort based on mode 
+        if mode == 'most_liked':
+            feed_list.sort(key=lambda x: x["likes"], reverse=True)
+        else: 
+            feed_list.sort(key=lambda x: x["created_at"], reverse=True)
 
         return { 
             "success": True, 

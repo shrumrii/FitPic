@@ -5,7 +5,7 @@ import io
 from database import supabase #import client from database.py 
 from pydantic import BaseModel 
 import uuid 
-from logger import request_logger
+from logger import request_logger, frontend_logger
 
 from routers import users, images, favorites 
 
@@ -32,10 +32,17 @@ app.include_router(favorites.router)
 async def root(): 
     return {"message": "Hello, World!"}  
 
+class FrontendError(BaseModel):
+    message: str
+    stack: str | None
+    user_id: str | None
+    timestamp: str
 
+@app.post("/logs/frontend-error")
+async def log_frontend_error(error: FrontendError): 
+    frontend_logger.error(f"{error.timestamp} | user:{error.user_id} | {error.message} | {error.stack}")
+    return {"success": True}
 
-# @app.get("/images/rank")
-# async def get_image_rank(image_id: str):
 
 
 

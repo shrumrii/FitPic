@@ -21,6 +21,14 @@ handler = logging.FileHandler("logs/request.log")
 handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
 request_logger.addHandler(handler)  
 
+#frontend error logger 
+frontend_logger = logging.getLogger("frontend")
+frontend_logger.setLevel(logging.ERROR)  
+frontend_logger.propagate = False 
+handler = logging.FileHandler("logs/frontend_error.log")
+handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
+frontend_logger.addHandler(handler) 
+
 #base error logger 
 def get_logger(name): 
     return logging.getLogger(name) 

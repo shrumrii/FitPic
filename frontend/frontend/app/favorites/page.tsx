@@ -8,7 +8,7 @@ import { getUser } from "@/lib/getUser";
 import Modal from "@/components/modal"
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
-
+import { loggedFetch } from "@/lib/api"; 
 
 export default function Favorites() {
 
@@ -26,12 +26,12 @@ export default function Favorites() {
 
             try { 
                 setLoadingFavorites(true); 
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`, undefined, user_id)  
                 
-                if (!response.ok) { 
-                    console.log(await response.text());
-                    throw new Error("Failed to get favorites")
-                }
+                // if (!response.ok) { 
+                //     console.log(await response.text());
+                //     throw new Error("Failed to get favorites")
+                // }
 
                 const result = await response.json(); 
                 //destructure and flatten favorites list
@@ -57,14 +57,14 @@ export default function Favorites() {
 
         try { 
 
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
-                    method: 'DELETE', 
+                    method: 'DELETE',
                     headers: {
-                        "Content-Type": 'application/json' 
-                    }, 
-                    body: JSON.stringify({ user_id, image_id }) 
-                });
+                        "Content-Type": 'application/json'
+                    },
+                    body: JSON.stringify({ user_id, image_id })
+                }, user_id);
             
             if (!response.ok) { 
                 console.error("Could not unfavorite image"); 
