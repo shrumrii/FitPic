@@ -90,7 +90,7 @@ async def get_user(user_id: str):
 
 #get all images from specific user 
 @router.get("/users/{user_id}/images")
-async def get_images(user_id: str, include_likes: bool = False):
+async def get_images(user_id: str, include_likes: bool = False, limit: int = 50):
 
     #get a count of likes if include_likes optional param is true 
     if (include_likes):
@@ -103,7 +103,7 @@ async def get_images(user_id: str, include_likes: bool = False):
 
         return { 
         "success": True, 
-        "data": query.data
+        "data": query.data[:limit]
         }
     except Exception as e: 
         logger.error(f"Failed to get images from {user_id}: {e}.")
@@ -270,7 +270,7 @@ async def get_followers(user_id: str):
 
 #get user feed, essentially combine /following and /images endpoints 
 @router.get("/users/{user_id}/feed")
-async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent"):
+async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent", limit: int = 50):
 
     feed_list = [] 
     try: 
@@ -300,6 +300,9 @@ async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent
             feed_list.sort(key=lambda x: x["likes"], reverse=True)
         else: 
             feed_list.sort(key=lambda x: x["created_at"], reverse=True)
+
+        #slice based on limit 
+        feed_list = feed_list[:limit]
 
         return { 
             "success": True, 
