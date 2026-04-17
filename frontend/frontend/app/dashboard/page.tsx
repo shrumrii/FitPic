@@ -120,6 +120,13 @@ export default function Dashboard() {
     const setFavorite = async (image_id: string) => { 
 
         try { 
+            //update favorited IDs state set optimistically
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
+
+            //optimistically update likes count (for feed and modal) 
+            setFeed(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: image.likes+1} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: prev.likes+1} : prev); 
 
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
@@ -142,18 +149,25 @@ export default function Dashboard() {
                 throw new Error("Could not favorite image - backend endpoint"); 
             }
 
-            //update favorited IDs state set 
-            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
-            setFavoritedImageIDs(favoritedIDs);
-
         } catch (error) { 
             console.error(error); 
+            //unset favorited ID and like # if error 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+            setFeed(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: Math.max(0, image.likes-1)} : image));
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: Math.max(0, prev.likes-1)} : prev);  
         } 
     }
 
     const setUnfavorite = async (image_id: string) => { 
 
         try { 
+
+            //remove image_id from favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+            setFeed(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: Math.max(0, image.likes-1)} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: Math.max(0, prev.likes-1)} : prev);  
 
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
                 {
@@ -176,12 +190,14 @@ export default function Dashboard() {
                 throw new Error("Could not favorite image - backend endpoint"); 
             }
 
-            //update favorited IDs state set 
-            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
-            setFavoritedImageIDs(favoritedIDs);
 
         } catch (error) { 
             console.error(error); 
+            //add back favorited ID and like count if error 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
+            setFeed(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: image.likes+1} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: prev.likes+1} : prev);
         } 
     }
 
