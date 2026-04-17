@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "@/components/navbar"
 import Image from "next/image";
-import { useState, useEffect, use } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
 import { getUser } from "@/lib/getUser";
@@ -20,9 +20,17 @@ export default function Dashboard() {
     const [loadingFavorites, setLoadingFavorites] = useState(false);
     const [fetched, setFetched] = useState(false);
     const [dashboardError, setDashboardError] = useState("");
-    const [filterMode, setFilterMode] = useState("recent"); 
+    const [filterMode, setFilterMode] = useState<"recent" | "most_liked">("recent"); 
+    const [dropdownOpen, setDropdownOpen] = useState(false); 
+    const dropdownRef = useRef<HTMLDivElement>(null); 
+
+    const filterLabels = {                                                                                                                     
+        recent: "Recent",                   
+        most_liked: "Most Liked"                                                                                                               
+    } 
 
     useEffect(() => {
+
         const getUserFeed = async (user_id: string) => {
 
             try {
@@ -96,6 +104,18 @@ export default function Dashboard() {
 
         populateDashboard();
     }, [user_id, loading, filterMode])
+
+    useEffect(() => {   
+        //? 
+        const handleDropdown = (event: MouseEvent) => { 
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {                                                  
+                setDropdownOpen(false);         
+            }
+        }   
+
+        document.addEventListener("mousedown", handleDropdown);                                                                                
+        return () => document.removeEventListener("mousedown", handleDropdown);                                                                
+    }, []);
 
     const setFavorite = async (image_id: string) => { 
 
@@ -174,6 +194,31 @@ export default function Dashboard() {
                 <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     My Feed
                 </h1>
+
+                {/* filter slicer */}
+                <div className="relative mb-6" ref={dropdownRef}>
+                    <button 
+                        onClick={() => setDropdownOpen(prev => !prev)}
+                        className="text-sm px-4 py-1.5 rounded-full border border-zinc-200 text-zinc-600 dark:text-zinc-400 flex items-center gap-2"
+                    > 
+                        {filterLabels[filterMode]} <span>▾</span>
+                    </button>
+
+                    {dropdownOpen && (
+                        <div className="absolute top-10 left-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md z-10 w-36">                                                                                                                                
+                            {(["recent", "most_liked"] as const).map((option) => (
+                                <button                                                                                                                    
+                                    key={option}            
+                                    onClick={() => { setFilterMode(option); setDropdownOpen(false); }}                                                     
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${filterMode === option ?
+                    "font-semibold" : "text-zinc-500"}`}                                                                                                       
+                                >                           
+                                    {filterLabels[option]}                                                                                                 
+                                </button>                 
+                            ))}                                                                                                                            
+                        </div> 
+                    )}
+                </div>
 
                 {feed.length === 0 ?
                     <div className="flex w-full items-center justify-center py-24">
