@@ -14,6 +14,7 @@ export default function UploadPage() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [successMessage, setSuccessMessage] = useState("");
     const [userID, setUserID] = useState("");
+    const [previewUrls, setPreviewUrls] = useState<string[]>([]); 
     const router = useRouter();
 
     useEffect(() => {
@@ -38,9 +39,12 @@ export default function UploadPage() {
         getUserID();
     }, [])
 
+    //handle files being added to upload box 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            setSelectedFiles(Array.from(e.target.files));
+            const files = Array.from(e.target.files); 
+            setSelectedFiles(files);
+            setPreviewUrls(files.map((file) => URL.createObjectURL(file))); 
         }
     };
 
@@ -49,10 +53,10 @@ export default function UploadPage() {
         setUploading(true);
         setSuccessMessage("");
 
-        for (const file of selectedFiles) { 
+        //function to upload one 
+        const uploadOne = async (file: File) => { 
             const formData = new FormData();
             formData.append("image", file);
-            
 
             try {
 
@@ -72,13 +76,18 @@ export default function UploadPage() {
                 if (result.success) {
                     setUploadedImages(prev => [...prev, { url: result.data.url, id: result.data.image_id }]);
                     console.log("Successfully uploaded image", result.data.url);
+
                 }
 
             } catch (error) {
                 console.error("Upload failed", error);
                 alert("Upload failed. Please try again.");
             }
-        } 
+        }
+
+        //upload requests in parallel 
+        await Promise.all(selectedFiles.map((file) => uploadOne(file))); 
+
         setUploading(false);
         setSuccessMessage("All images uploaded successfully!");
     };
@@ -107,12 +116,11 @@ export default function UploadPage() {
                     onClick={() => fileInputRef.current?.click()}
                 >
 
-
                     {selectedFiles.length > 0 ? (
                         <div className="grid grid-cols-3 gap-2 w-full">
-                            {selectedFiles.map((img, index) => (
+                            {previewUrls.map((img, index) => (
                                 <div key={index} className="rounded-lg overflow-hidden w-full">
-                                    <Image src={URL.createObjectURL(img)} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
+                                    <img src={img} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
                                 </div>
                             ))}
                         </div>
@@ -141,7 +149,7 @@ export default function UploadPage() {
                         <div className="grid grid-cols-1 gap-2 w-full"> 
                             {uploadedImages.map((img) => (
                                 <div key={img.id} className="rounded-lg overflow-hidden w-full">
-                                    <Image src={img.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
+                                    <img src={img.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
                                 </div>
                             ))}
                         </div>  

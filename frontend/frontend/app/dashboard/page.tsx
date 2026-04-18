@@ -250,7 +250,7 @@ export default function Dashboard() {
                     <div className="grid grid-cols-3 gap-1 w-full">
                         {feed.map((image) => (
                             <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                                <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
+                                <img src={image.url} alt="fit" className="object-cover hover:opacity-90 transition-opacity" />
                             </div>
                         ))}
                     </div>
@@ -263,7 +263,7 @@ export default function Dashboard() {
             {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
                 <div className="flex">
                     <div className="relative aspect-square w-2/3">
-                        <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
+                        <img src={selectedImage.url} alt="fit" className="object-cover"/>
                     </div>
                     <div className="flex flex-col gap-2 p-5 w-1/3">
                         <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>

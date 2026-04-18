@@ -274,26 +274,23 @@ async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent
 
     feed_list = [] 
     try: 
-        #get following 
+        #get following list (just ids)
         query = supabase.table("follows").select("following_id").eq("follower_id", user_id).execute() 
-        following = query.data 
+        following = [item["following_id"] for item in query.data]
 
-        for item in following: 
-            following_id = item["following_id"]
+        if include_likes: 
+            select = "user_id, image_id, users!images_user_id_fkey(username), created_at, url, favorites!favorites_image_id_fkey(count)"
+        else: 
+            select = "user_id, image_id, users!images_user_id_fkey(username), created_at, url"
 
-            if include_likes: 
-                select = "image_id, users!images_user_id_fkey(username), created_at, url, favorites!favorites_image_id_fkey(count)"
-            else: 
-                select = "image_id, users!images_user_id_fkey(username), created_at, url"
+        query = supabase.table("images").select(select).in_("user_id", following).order("created_at", desc=True).execute() 
+        images = query.data 
 
-            query = supabase.table("images").select(select).eq("user_id", following_id).order("created_at", desc=True).execute()
-            images = query.data
-            print(images) 
-            for image in images:
-                image_dict = {"user_id": following_id, "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
-                if include_likes:
-                    image_dict["likes"] = image["favorites"][0]["count"] if image.get("favorites") else 0
-                feed_list.append(image_dict)
+        for image in images: 
+            image_dict = {"user_id": image["user_id"], "username": image["users"]["username"], "image_id": image["image_id"], "url": image["url"], "created_at": image["created_at"]}
+            if include_likes:
+                image_dict["likes"] = image["favorites"][0]["count"] if image.get("favorites") else 0
+            feed_list.append(image_dict)
 
         #sort based on mode 
         if mode == 'most_liked':

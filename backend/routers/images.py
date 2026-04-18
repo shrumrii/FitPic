@@ -20,7 +20,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         img = Image.open(io.BytesIO(contents)) 
         img.thumbnail((1920, 1920)) #resize to max 1920x1920 
         img_io = io.BytesIO() 
-        img.save(img_io, format=img.format or "JPEG", quality=85, optimize=True) 
+        img.save(img_io, format=img.format or "JPEG", quality=85) 
         img_io.seek(0) 
         contents = img_io.read()  
 
