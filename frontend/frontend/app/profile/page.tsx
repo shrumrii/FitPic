@@ -331,10 +331,16 @@ export default function Profile() {
                         />
 
                         <button
-                            className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`} 
-                            onClick={() => setEditMode(!editMode)}                                                                                                     
+                            className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`}
+                            onClick={() => setEditMode(!editMode)}
                         >
                             Edit Mode
+                        </button>
+                        <button
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                            onClick={() => router.push("/change_password")}
+                        >
+                            Change Password
                         </button>
                         <button
                             className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
