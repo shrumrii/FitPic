@@ -15,6 +15,8 @@ export default function UploadPage() {
     const [successMessage, setSuccessMessage] = useState("");
     const [userID, setUserID] = useState("");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+    const [imageLoaded, setImageLoaded] = useState(false); 
+    const [uploadedImageLoaded, setUploadedImageLoaded] = useState(false); 
     const router = useRouter();
 
     useEffect(() => {
@@ -44,6 +46,7 @@ export default function UploadPage() {
             const file = e.target.files[0];
             setSelectedFile(file);
             setPreviewUrl(URL.createObjectURL(file));
+            setImageLoaded(false); 
         }
     };
 
@@ -106,8 +109,8 @@ export default function UploadPage() {
                     onClick={() => fileInputRef.current?.click()}
                 >
                     {previewUrl ? (
-                        <div className="rounded-lg overflow-hidden w-full">
-                            <img src={previewUrl} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
+                        <div className="rounded-lg overflow-hidden w-full aspect-[3/4]">
+                            <img src={previewUrl} onLoad={() => setImageLoaded(true)} alt="preview" width={400} height={400} className={`w-full object-cover rounded-lg transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`} />
                         </div>
                     ) : (
                         <>
@@ -132,7 +135,7 @@ export default function UploadPage() {
                         <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
                         {uploadedImage && (
                             <div className="rounded-lg overflow-hidden w-full mt-2">
-                                <img src={uploadedImage.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
+                                <img src={uploadedImage.url} onLoad={() => setUploadedImageLoaded(true)} alt="uploaded image" width={400} height={400} className={`w-full object-cover rounded-lg transition-opacity duration-300 ${uploadedImageLoaded ? "opacity-100" : "opacity-0"}`} />
                             </div>
                         )}
                     </>
