@@ -8,13 +8,13 @@ import { loggedFetch } from "@/lib/api";
 
 export default function UploadPage() {
 
-    const [selectedFiles, setSelectedFiles] = useState<File[]>([]); //typescript generic, initially null, but HAS TO be a File object when a file is selected
+    const [selectedFile, setSelectedFile] = useState<File | null>(null);
     const [uploading, setUploading] = useState(false);
-    const [uploadedImages, setUploadedImages] = useState<{ url: string, id: string }[]>([]);
+    const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [successMessage, setSuccessMessage] = useState("");
     const [userID, setUserID] = useState("");
-    const [previewUrls, setPreviewUrls] = useState<string[]>([]); 
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const router = useRouter();
 
     useEffect(() => {
@@ -39,57 +39,48 @@ export default function UploadPage() {
         getUserID();
     }, [])
 
-    //handle files being added to upload box 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
-            const files = Array.from(e.target.files); 
-            setSelectedFiles(files);
-            setPreviewUrls(files.map((file) => URL.createObjectURL(file))); 
+            const file = e.target.files[0];
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
         }
     };
 
     const handleUpload = async () => {
-        if (!selectedFiles) return;
+        if (!selectedFile) return;
         setUploading(true);
         setSuccessMessage("");
 
-        //function to upload one 
-        const uploadOne = async (file: File) => { 
+        try {
             const formData = new FormData();
-            formData.append("image", file);
+            formData.append("image", selectedFile);
+            formData.append("user_id", userID);
 
-            try {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
+                method: "POST",
+                body: formData
+            }, userID);
 
-                formData.append("user_id", userID);
-
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
-                    method: "POST",
-                    body: formData
-                }, userID)
-
-                if (!response.ok) { //server
-                    console.log(await response.text())
-                    throw new Error("Upload failed");
-                }
-
-                const result = await response.json(); //backend check
-                if (result.success) {
-                    setUploadedImages(prev => [...prev, { url: result.data.url, id: result.data.image_id }]);
-                    console.log("Successfully uploaded image", result.data.url);
-
-                }
-
-            } catch (error) {
-                console.error("Upload failed", error);
-                alert("Upload failed. Please try again.");
+            if (!response.ok) {
+                console.log(await response.text());
+                throw new Error("Upload failed");
             }
+
+            const result = await response.json();
+            if (result.success) {
+                setUploadedImage({ url: result.data.url, id: result.data.image_id });
+                setSuccessMessage("Image uploaded successfully!");
+            } else {
+                alert(result.message || "Upload failed. Please try again.");
+            }
+
+        } catch (error) {
+            console.error("Upload failed", error);
+            alert("Upload failed. Please try again.");
         }
 
-        //upload requests in parallel 
-        await Promise.all(selectedFiles.map((file) => uploadOne(file))); 
-
         setUploading(false);
-        setSuccessMessage("All images uploaded successfully!");
     };
 
     return (
@@ -107,7 +98,6 @@ export default function UploadPage() {
                     ref={fileInputRef}
                     onChange={fileChange}
                     className="hidden"
-                    multiple 
                 />
 
                 {/* upload zone */}
@@ -115,14 +105,9 @@ export default function UploadPage() {
                     className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-4 py-14 px-6 cursor-pointer hover:border-amber-400 transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                 >
-
-                    {selectedFiles.length > 0 ? (
-                        <div className="grid grid-cols-3 gap-2 w-full">
-                            {previewUrls.map((img, index) => (
-                                <div key={index} className="rounded-lg overflow-hidden w-full">
-                                    <img src={img} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
-                                </div>
-                            ))}
+                    {previewUrl ? (
+                        <div className="rounded-lg overflow-hidden w-full">
+                            <img src={previewUrl} alt="preview" width={400} height={400} className="w-full object-cover rounded-lg" />
                         </div>
                     ) : (
                         <>
@@ -132,27 +117,24 @@ export default function UploadPage() {
                     )}
                 </div>
 
-                {selectedFiles.length > 0 && (
+                {selectedFile && (
                     <button
                         className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
                         onClick={handleUpload}
-                        disabled={!selectedFiles || uploading || uploadedImages.length > 0}
+                        disabled={uploading || !!uploadedImage}
                     >
                         {uploading ? "Uploading..." : "Upload"}
                     </button>
                 )}
-                
+
                 {successMessage && (
                     <>
                         <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
-
-                        <div className="grid grid-cols-1 gap-2 w-full"> 
-                            {uploadedImages.map((img) => (
-                                <div key={img.id} className="rounded-lg overflow-hidden w-full">
-                                    <img src={img.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
-                                </div>
-                            ))}
-                        </div>  
+                        {uploadedImage && (
+                            <div className="rounded-lg overflow-hidden w-full mt-2">
+                                <img src={uploadedImage.url} alt="uploaded image" width={400} height={400} className="w-full object-cover rounded-lg" />
+                            </div>
+                        )}
                     </>
                 )}
 
