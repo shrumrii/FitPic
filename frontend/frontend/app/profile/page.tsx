@@ -29,6 +29,9 @@ export default function Profile() {
     const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
     const [fetched, setFetched] = useState(false);
+    const [analyzeLoading, setAnalyzeLoading] = useState(false); 
+    const [error, setError] = useState(""); 
+    const errorTimeout = useRef<NodeJS.Timeout | null>(null);
 
     const router = useRouter();
 
@@ -444,6 +447,10 @@ export default function Profile() {
                             <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                         </div>
                         <div className="flex flex-col gap-2 p-5 w-1/3">
+                            <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                                onClick={() => router.push(`/analyze/${selectedImage.image_id}?user_id=${user_id}&image_url=${selectedImage.url}`)}> 
+                                {analyzeLoading ? "Redirecting..." : "Analyze"}
+                            </button> 
                             <div className="flex items-center justify-between mt-auto">
                                 <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
