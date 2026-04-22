@@ -4,10 +4,13 @@ import io
 from database import supabase #import client from database.py 
 from pydantic import BaseModel 
 import uuid 
+import json 
+import requests
 from google import genai
 from google.genai import types
+from gemini.model_config import ANALYZE_CONFIG, VALIDATE_CONFIG, schema
+
 from logger import get_logger 
-import requests
 
 router = APIRouter() 
 logger = get_logger(__name__)
@@ -31,10 +34,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         #validate img 
         response = client.models.generate_content(
         model="gemini-3-flash-preview",
-        config=types.GenerateContentConfig(
-            system_instruction="You are a clothing validator. Answer only 'yes' or 'no'.",
-            thinking_config=types.ThinkingConfig(thinking_level="low")
-        ), 
+        config=VALIDATE_CONFIG, 
         contents=[
             types.Part.from_bytes(
                 data=contents,
@@ -105,28 +105,28 @@ async def analyze_image(image_id: str):
         image_bytes = requests.get(image_url).content 
 
         #prompt gemini 
-        response = client.models.generate_content_stream(
+        response = client.models.generate_content(
         model="gemini-3-flash-preview",
-        config=types.GenerateContentConfig(
-            system_instruction="You are an expert fashion stylist. Give specific, honest, actionable style advice."
-        ), 
+        config=ANALYZE_CONFIG, 
         contents=[
             types.Part.from_bytes(
                 data=image_bytes,
                 mime_type='image/jpeg',
             ), 
-            "Analyze this image and give tips on the image's fashion."
+            "Analyze this image and look at the whole outfit. Give a quick style tip. For tags, identify the color, style (e.g. streetwear, minimalist, casual), occasion (e.g. everyday, formal, party), and season."
         ] 
         )
 
         #return gemini response 
-        analysis = [] 
-        for chunk in response:
-            analysis.append(chunk.text)
+        print(response.text)  
+        parsed = json.loads(response.text)
+        analysis = parsed.get("analysis", "")
+        tags = parsed.get("tags", {})
 
         return { 
             "success": True, 
-            "analysis": "".join(analysis)
+            "analysis": analysis, 
+            "tags": tags 
         } 
     
     except Exception as e: 

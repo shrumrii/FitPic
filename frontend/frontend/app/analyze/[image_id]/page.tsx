@@ -50,7 +50,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             <Navbar/>
             <main className="w-full max-w-4xl mx-auto px-6 py-8">
 
-                <button onClick={() => router.back()} className="text-sm text-zinc-500 hover:text-black dark:hover:text-white mb-6 inline-block">
+                <button onClick={() => router.replace('/profile')} className="text-sm text-zinc-500 hover:text-black dark:hover:text-white mb-6 inline-block">
                     ← Back
                 </button>
 

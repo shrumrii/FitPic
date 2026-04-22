@@ -153,7 +153,7 @@ export default function UploadPage() {
 
                 {uploadedImage && (
                     <div className="flex flex-col items-center gap-3 mt-6">
-                        <button className="mt-4 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                        <button className="mt-4 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors disabled:opacity-50 disabled:hover:border-zinc-200 disabled:hover:text-inherit"
                             onClick={() => router.push("/profile")}
                             disabled={analyzeLoading}>
                             View on Profile
