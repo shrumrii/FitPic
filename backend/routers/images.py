@@ -30,7 +30,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
 
         #validate img 
         response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-3-flash-preview",
         config=types.GenerateContentConfig(
             system_instruction="You are a clothing validator. Answer only 'yes' or 'no'.",
             thinking_config=types.ThinkingConfig(thinking_level="low")
@@ -106,10 +106,9 @@ async def analyze_image(image_id: str):
 
         #prompt gemini 
         response = client.models.generate_content_stream(
-        model="gemini-2.0-flash-lite",
+        model="gemini-3-flash-preview",
         config=types.GenerateContentConfig(
-            system_instruction="You are an expert fashion stylist. Give specific, honest, actionable style advice.",
-            thinking_config=types.ThinkingConfig(thinking_level="low")
+            system_instruction="You are an expert fashion stylist. Give specific, honest, actionable style advice."
         ), 
         contents=[
             types.Part.from_bytes(

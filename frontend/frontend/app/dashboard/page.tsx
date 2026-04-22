@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
-import { getUser } from "@/lib/getUser";
 import Modal from "@/components/modal"; 
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
@@ -23,6 +22,7 @@ export default function Dashboard() {
     const [filterMode, setFilterMode] = useState<"recent" | "most_liked">("recent"); 
     const [dropdownOpen, setDropdownOpen] = useState(false); 
     const dropdownRef = useRef<HTMLDivElement>(null); 
+    const [filterLoading, setFilterLoading] = useState(false); 
 
     const filterLabels = {                                                                                                                     
         recent: "Recent",                   
@@ -34,7 +34,7 @@ export default function Dashboard() {
         const getUserFeed = async (user_id: string) => {
 
             try {
-
+                setFilterLoading(true); 
                 const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed?mode=${filterMode}`, undefined, user_id);
 
                 if (!response.ok) {
@@ -55,15 +55,23 @@ export default function Dashboard() {
             } catch (error) {
                 console.error(error);
             } finally {
+                setFilterLoading(false); 
             }
         }
 
         const populateDashboard = async () => {
 
-            console.log("populateDashboard called"); 
+            console.log("populateDashboard called");
             if (user_id == "") return;
 
             try {
+
+                const profileRes = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}`, undefined, user_id);
+                const profileResult = await profileRes.json();
+                if (!profileResult.success) {
+                    router.push("/onboarding");
+                    return;
+                }
 
                 await Promise.all([getUserFeed(user_id), getFavorites(user_id)]);
 
@@ -225,7 +233,7 @@ export default function Dashboard() {
                             {(["recent", "most_liked"] as const).map((option) => (
                                 <button                                                                                                                    
                                     key={option}            
-                                    onClick={() => { setFilterMode(option); setDropdownOpen(false); }}                                                     
+                                    onClick={() => { setFilterMode(option); setDropdownOpen(false);}}                                                     
                                     className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${filterMode === option ?
                     "font-semibold" : "text-zinc-500"}`}                                                                                                       
                                 >                           
@@ -246,14 +254,15 @@ export default function Dashboard() {
 
                     :
 
-                    /* map posts */
-                    <div className="grid grid-cols-3 gap-1 w-full">
-                        {feed.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                                <img src={image.url} alt="fit" className="object-cover hover:opacity-90 transition-opacity" />
-                            </div>
-                        ))}
-                    </div>
+                    filterLoading ? <Spinner/> : 
+                        (<div className="grid grid-cols-3 gap-1 w-full">
+                            {feed.map((image) => (
+                                <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                                    <img src={image.url} alt="fit" className="object-cover w-full h-full hover:opacity-90 transition-opacity" />
+                                </div>
+                            ))}
+                        </div>
+                    )
                 }
 
                 {dashboardError && <p className="text-xs text-red-500">{dashboardError}</p>}
@@ -262,7 +271,7 @@ export default function Dashboard() {
 
             {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
                 <div className="flex">
-                    <div className="relative aspect-square w-2/3">
+                    <div className="relative aspect-[4/5] w-2/3">
                         <img src={selectedImage.url} alt="fit" className="object-cover"/>
                     </div>
                     <div className="flex flex-col gap-2 p-5 w-1/3">

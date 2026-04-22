@@ -1,10 +1,10 @@
 "use client";
 import Image from "next/image";
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
-import { getUser } from "@/lib/getUser";
 import { loggedFetch } from "@/lib/api";
+import { useUser } from "@/context/userContext";
 
 export default function UploadPage() {
 
@@ -13,33 +13,14 @@ export default function UploadPage() {
     const [uploadedImage, setUploadedImage] = useState<{ url: string, id: string } | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [successMessage, setSuccessMessage] = useState("");
-    const [userID, setUserID] = useState("");
     const [previewUrl, setPreviewUrl] = useState<string | null>(null);
     const [imageLoaded, setImageLoaded] = useState(false); 
     const [uploadedImageLoaded, setUploadedImageLoaded] = useState(false); 
+    const [analyzeLoading, setAnalyzeLoading] = useState(false);
+    const [error, setError] = useState("");
     const router = useRouter();
 
-    useEffect(() => {
-        const getUserID = async () => {
-
-            try {
-
-                const user = await getUser();
-
-                if (user == null) {
-                    console.log("Redirect to welcome page");
-                    router.push("/welcome");
-                    return;
-                }
-
-                setUserID(user.id);
-
-            } catch (error) {
-                console.error(error);
-            }
-        }
-        getUserID();
-    }, [])
+    const { username, user_id, loading } = useUser() ?? { username: "", user_id: "", loading: false };
 
     const fileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files.length > 0) {
@@ -47,6 +28,8 @@ export default function UploadPage() {
             setSelectedFile(file);
             setPreviewUrl(URL.createObjectURL(file));
             setImageLoaded(false); 
+            setUploadedImage(null); 
+            setSuccessMessage("");
         }
     };
 
@@ -58,12 +41,12 @@ export default function UploadPage() {
         try {
             const formData = new FormData();
             formData.append("image", selectedFile);
-            formData.append("user_id", userID);
+            formData.append("user_id", user_id);
 
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/upload`, {
                 method: "POST",
                 body: formData
-            }, userID);
+            }, user_id);
 
             if (!response.ok) {
                 console.log(await response.text());
@@ -85,6 +68,33 @@ export default function UploadPage() {
 
         setUploading(false);
     };
+
+    const handleAnalyze = async (image_id: string, image_url: string) => { 
+        setError(""); 
+        try { 
+            setAnalyzeLoading(true); 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id); 
+
+            if (!response.ok) { 
+                console.error("Could not analyze image.")
+                throw new Error("Could not analyze image.")
+            }
+        
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                setError(result.message); 
+                return; 
+            }
+            router.push(`/analyze/${image_id}?user_id=${user_id}&image_url=${encodeURIComponent(image_url)}&analysis=${encodeURIComponent(result.analysis)}`); 
+
+        } catch (error) { 
+            console.error(error); 
+            setError(String(error)); 
+        } finally { 
+            setAnalyzeLoading(false);  
+        }
+    }
 
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
@@ -109,14 +119,14 @@ export default function UploadPage() {
                     onClick={() => fileInputRef.current?.click()}
                 >
                     {previewUrl ? (
-                        <div className="rounded-lg overflow-hidden w-full aspect-[3/4]">
+                        <div className="rounded-lg overflow-hidden w-full aspect-[4/5]">
                             <img src={previewUrl} onLoad={() => setImageLoaded(true)} alt="preview" width={400} height={400} className={`w-full object-cover rounded-lg transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`} />
                         </div>
                     ) : (
-                        <>
+                        <div className="flex flex-col items-center gap-2">
                             <p className="text-zinc-400 text-sm text-center">Click to choose a photo</p>
                             <p className="text-zinc-300 dark:text-zinc-600 text-xs">JPG, PNG, or WebP</p>
-                        </>
+                        </div>
                     )}
                 </div>
 
@@ -134,12 +144,30 @@ export default function UploadPage() {
                     <>
                         <p className="mt-3 text-center text-sm text-green-600 dark:text-green-400">{successMessage}</p>
                         {uploadedImage && (
-                            <div className="rounded-lg overflow-hidden w-full mt-2">
+                            <div className="rounded-lg overflow-hidden w-full mt-2 aspect-[4/5]">
                                 <img src={uploadedImage.url} onLoad={() => setUploadedImageLoaded(true)} alt="uploaded image" width={400} height={400} className={`w-full object-cover rounded-lg transition-opacity duration-300 ${uploadedImageLoaded ? "opacity-100" : "opacity-0"}`} />
                             </div>
                         )}
                     </>
                 )}
+
+                {uploadedImage && (
+                    <div className="flex flex-col items-center gap-3 mt-6">
+                        <button className="mt-4 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                            onClick={() => router.push("/profile")}
+                            disabled={analyzeLoading}>
+                            View on Profile
+                        </button>
+
+                        <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                            onClick={() => handleAnalyze(uploadedImage.id, uploadedImage.url)}>
+                            {analyzeLoading ? "Analyzing..." : "Analyze this picture"}
+                        </button> 
+                    </div> 
+                )}
+
+                
+
 
             </main>
         </div>

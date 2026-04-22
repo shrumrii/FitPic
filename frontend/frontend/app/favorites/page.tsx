@@ -4,7 +4,6 @@ import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
-import { getUser } from "@/lib/getUser";
 import Modal from "@/components/modal"
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
@@ -12,7 +11,7 @@ import { loggedFetch } from "@/lib/api";
 
 export default function Favorites() {
 
-    const { username, user_id, loading } = useUser() ?? { username: "", user_id: "", loading: false};
+    const { user_id, loading } = useUser() ?? { user_id: "", loading: false};
     const router = useRouter();
 
     const [loadingFavorites, setLoadingFavorites] = useState(false);
@@ -27,11 +26,6 @@ export default function Favorites() {
             try { 
                 setLoadingFavorites(true); 
                 const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`, undefined, user_id)  
-                
-                // if (!response.ok) { 
-                //     console.log(await response.text());
-                //     throw new Error("Failed to get favorites")
-                // }
 
                 const result = await response.json(); 
                 //destructure and flatten favorites list
@@ -111,7 +105,7 @@ export default function Favorites() {
                     /* map posts */
                     <div className="grid grid-cols-3 gap-1 w-full">
                         {favorites.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                                 <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
                             </div>
                         ))}
@@ -122,7 +116,7 @@ export default function Favorites() {
 
             {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
                 <div className="flex">
-                    <div className="relative aspect-square w-2/3">
+                    <div className="relative aspect-[4/5] w-2/3">
                         <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                     </div>
                     <div className="flex flex-col gap-2 p-5 w-1/3">

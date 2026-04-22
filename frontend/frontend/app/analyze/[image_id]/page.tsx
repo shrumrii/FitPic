@@ -2,7 +2,6 @@
 import Navbar from "@/components/navbar"
 import { useState, useEffect, use, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { getUser } from "@/lib/getUser";
 import { loggedFetch } from "@/lib/api";
 import { useSearchParams } from "next/navigation";
 
@@ -12,15 +11,12 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const searchParams = useSearchParams();                                                                                                    
     const user_id = searchParams.get("user_id") ?? undefined; 
     const image_url = decodeURIComponent(searchParams.get("image_url") ?? "") || undefined; 
+    const analysis = decodeURIComponent(searchParams.get("analysis") ?? "") || undefined; 
     const [loading, setLoading] = useState(false);  
     const [error, setError] = useState("");
-    const [analysis, setAnalysis] = useState(""); 
     const [imageLoaded, setImageLoaded] = useState(false); 
     const router = useRouter();
-
-    useEffect(() => {
-        analyze(); 
-    }, [])
+    const [redoAnalysis, setRedoAnalysis] = useState(""); 
 
     const analyze = async () => { 
         setError(""); 
@@ -40,7 +36,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 return; 
             }
 
-            setAnalysis(result.analysis); 
+            setRedoAnalysis(result.analysis); 
 
         } catch (error) { 
             console.error(error); 
@@ -52,32 +48,35 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
             <Navbar/>
-            <main className="w-full max-w-xl mx-auto px-6 py-8">
+            <main className="w-full max-w-4xl mx-auto px-6 py-8">
 
                 <button onClick={() => router.back()} className="text-sm text-zinc-500 hover:text-black dark:hover:text-white mb-6 inline-block">
                     ← Back
                 </button>
 
-                {image_url && (
-                    <img src={image_url} onLoad={() => setImageLoaded(true)} alt="outfit" className={`w-full rounded-xl object-cover mb-6 transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}/>
-                )}
+                <div className="flex gap-8">
+                    {image_url && (
+                        <img src={image_url} onLoad={() => setImageLoaded(true)} alt="outfit" className={`w-96 flex-shrink-0 rounded-xl object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}/>
+                    )}
 
-                <h2 className="text-xl font-semibold text-black dark:text-white mb-4">Style Analysis</h2>
+                    <div className="flex flex-col flex-1">
+                        <h2 className="text-xl font-semibold text-black dark:text-white mb-4">Style Analysis</h2>
 
-                {error && (
-                    <div> 
-                        <p className="text-sm text-red-500 mb-4">{error}</p>
-                        <button className="text-sm text-zinc-500 hover:text-black dark:hover:text-white mb-6 inline-block" 
-                            onClick={() => analyze()} 
-                        >Try again</button>
+                        {loading ? (
+                            <p className="text-sm text-zinc-400">Analyzing your outfit...</p>
+                        ) : error ? (
+                            <div>
+                                <p className="text-sm text-red-500 mb-4">{error}</p>
+                                <button className="text-sm text-zinc-500 hover:text-black dark:hover:text-white" onClick={() => analyze()}>Try again</button>
+                            </div>
+                        ) : (   
+                            <> 
+                                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">{redoAnalysis || analysis}</p>
+                                <button className="text-sm text-zinc-500 hover:text-black dark:hover:text-white" onClick={() => analyze()}>Analyze again</button>
+                            </> 
+                        )}
                     </div>
-                )} 
-
-                {loading ? (
-                    <p className="text-sm text-zinc-400">Analyzing your outfit...</p>
-                ) : (
-                    <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{analysis}</p>
-                )}
+                </div>
 
             </main>
         </div>

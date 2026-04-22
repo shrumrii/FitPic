@@ -25,20 +25,20 @@ export default function Profile() {
     //current logged in user info
     const { user_id: logged_user_id, loading} = useUser() ?? { user_id: "", loading: false};
 
-    const [images, setImages] = useState<{image_id: string, url: string, created_at: string}[]>([]);
+    const [images, setImages] = useState<{image_id: string, url: string, created_at: string, likes: number}[]>([]);
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
     const [followingList, setFollowingList] = useState<{ following_id: string, username: string }[]>([]);
     const [followerList, setFollowerList] = useState<{ follower_id: string, username: string }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string} | null>(null);
+    const [selectedImage, setSelectedImage] = useState<{image_id: string, url: string, created_at: string, likes: number} | null>(null);
     const [followingModal, setFollowingModal] = useState(false);
     const [followerModal, setFollowerModal] = useState(false);
+    const [fetched, setFetched] = useState(false); 
 
     const router = useRouter();
 
     useEffect(() => {
 
         const getProfileInfo = async () => {
-            setLoadingProfile(true);
             if (!target_user_id) return;
 
             try {
@@ -59,19 +59,18 @@ export default function Profile() {
                 setTargetUsername(result.data.username);
                 setTargetProfilePic(result.data.pfp_url);
                 setTargetAge(result.data.age);
-                getProfileFeed();
-                getFavorites();
+                await Promise.all([getProfileFeed(), getFavorites()]); 
 
             } catch (error) {
                 console.error(error);
             } finally {
-                setLoadingProfile(false);
+                setFetched(true); 
             }
         }
 
         const getProfileFeed = async () => {
             try {
-                const imagesResponse = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/images`, undefined, logged_user_id);
+                const imagesResponse = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${target_user_id}/images?include_likes=true`, undefined, logged_user_id);
 
                 if (!imagesResponse.ok) {
                     console.log(imagesResponse.status)
@@ -79,7 +78,7 @@ export default function Profile() {
                 }
 
                 const imagesResult = await imagesResponse.json();
-                setImages(imagesResult.data);
+                setImages(imagesResult.data.map((item: any) => ({...item, likes: item.favorites?.[0]?.count ?? 0})));
 
             } catch (error) {
                 console.error(error);
@@ -150,48 +149,89 @@ export default function Profile() {
             console.error(error);
         }
     }
+const setFavorite = async (image_id: string) => { 
 
-    const addFavorite = async (image_id: string) => {
-        try {
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
-                method: 'POST',
-                headers: { "Content-Type": 'application/json' },
-                body: JSON.stringify({ user_id: logged_user_id, image_id })
-            }, logged_user_id);
+        try { 
 
-            if (!response.ok) throw new Error("Could not favorite image");
+            //update image_id from favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
+            setImages(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: image.likes+1} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: prev.likes+1} : prev);
 
-            const result = await response.json();
-            if (!result.success) throw new Error("Could not favorite image - backend endpoint");
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+                {
+                    method: 'POST',
+                    headers: {
+                        "Content-Type": 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: logged_user_id, image_id })
+                }, target_user_id);
+            
+            if (!response.ok) { 
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
+            }
 
-            setFavoritedImageIDs(new Set<string>([...favoritedImageIDs, image_id]));
+            const result = await response.json(); 
 
-        } catch (error) {
-            console.error(error);
-        }
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not favorite image - backend endpoint"); 
+            }
+
+        } catch (error) { 
+            console.error(error); 
+            //add back favorited ID and like count if error 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: Math.max(0, prev.likes-1)} : prev); 
+            setImages(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: Math.max(0, image.likes-1)} : image)) 
+        } 
     }
 
-    const removeFavorite = async (image_id: string) => {
-        try {
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, {
-                method: 'DELETE',
-                headers: { "Content-Type": 'application/json' },
-                body: JSON.stringify({ user_id: logged_user_id, image_id })
-            }, logged_user_id);
+    const setUnfavorite = async (image_id: string) => { 
 
-            if (!response.ok) throw new Error("Could not unfavorite image");
+        try { 
 
-            const result = await response.json();
-            if (!result.success) throw new Error("Could not unfavorite image - backend endpoint");
+            //remove image_id from favorited IDs state set 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs].filter(id => id !== image_id))
+            setFavoritedImageIDs(favoritedIDs);
+            setImages(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: Math.max(0, image.likes-1)} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: Math.max(0, prev.likes-1)} : prev);  
 
-            setFavoritedImageIDs(new Set<string>([...favoritedImageIDs].filter(id => id !== image_id)));
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`,
+                {
+                    method: 'DELETE',
+                    headers: {
+                        "Content-Type": 'application/json'
+                    },
+                    body: JSON.stringify({ user_id: logged_user_id, image_id })
+                }, target_user_id);
+            
+            if (!response.ok) { 
+                console.error("Could not favorite image"); 
+                throw new Error("Could not favorite image"); 
+            }
 
-        } catch (error) {
-            console.error(error);
-        }
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                console.log(result.message); 
+                throw new Error("Could not favorite image - backend endpoint"); 
+            }
+
+        } catch (error) { 
+            console.error(error); 
+            //add back favorited ID and like count if error 
+            const favoritedIDs = new Set<string>([...favoritedImageIDs, image_id])
+            setFavoritedImageIDs(favoritedIDs);
+            setImages(prev => prev.map((image) => image.image_id == image_id ? { ...image, likes: image.likes+1} : image)); 
+            setSelectedImage(prev => prev && prev.image_id == image_id ? {...prev, likes: prev.likes+1} : prev);
+        } 
     }
 
-    if (loading || loadingProfile) return <Spinner/>;
+    if (!fetched) return <Spinner/>
 
     return (
         <div className="flex flex-col min-h-screen bg-white dark:bg-black">
@@ -238,7 +278,7 @@ export default function Profile() {
                     :
                     <div className="grid grid-cols-3 gap-1 w-full">
                         {images.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                                 <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
                             </div>
                         ))}
@@ -292,15 +332,16 @@ export default function Profile() {
             {selectedImage && (
                 <Modal onClose={() => setSelectedImage(null)}>
                     <div className="flex">
-                        <div className="relative aspect-square w-2/3">
+                        <div className="relative aspect-[4/5] w-2/3">
                             <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                         </div>
                         <div className="flex flex-col gap-2 p-5 w-1/3">
                             <div className="flex items-center justify-between mt-auto">
+                                <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
                                 <Heart
                                     filled={favoritedImageIDs.has(selectedImage.image_id)}
-                                    onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? removeFavorite(selectedImage.image_id) : addFavorite(selectedImage.image_id)}
+                                    onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)}
                                 />
                             </div>
                         </div>

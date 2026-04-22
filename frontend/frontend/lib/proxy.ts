@@ -60,7 +60,8 @@ export async function updateSession(request: NextRequest) {
     user && 
     (request.nextUrl.pathname.startsWith('/login') ||
     request.nextUrl.pathname.startsWith('/signup') ||
-    request.nextUrl.pathname.startsWith('/welcome'))
+    request.nextUrl.pathname.startsWith('/welcome')) || 
+    request.nextUrl.pathname === '/'
   ) { 
     //user exists and on public route, send to dashboard 
     const url = request.nextUrl.clone()

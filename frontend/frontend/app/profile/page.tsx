@@ -32,6 +32,8 @@ export default function Profile() {
     const [analyzeLoading, setAnalyzeLoading] = useState(false); 
     const [error, setError] = useState(""); 
     const errorTimeout = useRef<NodeJS.Timeout | null>(null);
+    const [dropdownOpen, setDropdownOpen] = useState(false); 
+    const dropdownRef = useRef<HTMLDivElement>(null); 
 
     const router = useRouter();
 
@@ -94,6 +96,17 @@ export default function Profile() {
         } 
         getProfileInfo();
     }, [loading, user_id]);
+
+    useEffect(() => {   
+        const handleDropdown = (event: MouseEvent) => { 
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {                                                  
+                setDropdownOpen(false);         
+            }
+        }   
+
+        document.addEventListener("mousedown", handleDropdown);                                                                                
+        return () => document.removeEventListener("mousedown", handleDropdown);                                                                
+    }, []);
 
     //update profile pic
     const changeProfilePicture = async (file: File) => {
@@ -288,6 +301,33 @@ export default function Profile() {
         } 
     }
 
+    const handleAnalyze = async (image_id: string, image_url: string) => { 
+        setError(""); 
+        try { 
+            setAnalyzeLoading(true); 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id); 
+
+            if (!response.ok) { 
+                console.error("Could not analyze image.")
+                throw new Error("Could not analyze image.")
+            }
+        
+            const result = await response.json(); 
+
+            if (!result.success) { 
+                setError(result.message); 
+                return; 
+            }
+            router.push(`/analyze/${image_id}?user_id=${user_id}&image_url=${encodeURIComponent(image_url)}&analysis=${encodeURIComponent(result.analysis)}`); 
+
+        } catch (error) { 
+            console.error(error); 
+            setError(String(error)); 
+        } finally { 
+            setAnalyzeLoading(false);  
+        }
+    }
+
     if (!fetched) return <Spinner/>;
 
     return (
@@ -334,34 +374,46 @@ export default function Profile() {
                         />
 
                         <button
-                            className={`text-sm font-medium border rounded-lg px-4 py-2 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`}
+                            className={`text-sm font-medium border rounded-lg px-4 py-1.5 w-28 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`}
                             onClick={() => setEditMode(!editMode)}
                         >
                             Edit Mode
                         </button>
+
                         <button
-                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
-                            onClick={() => router.push("/change_password")}
-                        >
-                            Change Password
-                        </button>
-                        <button
-                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
-                            onClick={() => fileInputRef.current?.click()}
-                        >
-                            Edit photo
-                        </button>
-                        <button
-                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-red-400 hover:text-red-400 transition-colors"
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-1.5 w-28 hover:border-red-400 hover:text-red-400 transition-colors"
                             onClick={handleSignout}
                         >
                             Sign out
                         </button>
+
+                        {/* dropdown */}
+                        <div className="relative" ref={dropdownRef}>
+                            <button
+                                onClick={() => setDropdownOpen(prev => !prev)}
+                                className="text-sm font-medium px-4 py-1.5 w-28 rounded-lg border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-400 flex items-center justify-between"
+                            > 
+                                Update <span>▾</span>
+                            </button>
+
+                            {dropdownOpen && (
+                                <div className="absolute top-10 left-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md z-10 w-36">                                                                                                                                
+                                    <button onClick={() => { router.push("/change_password"); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm         
+                                        text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">                                                                                   
+                                            Change Password                                                                                                                        
+                                        </button>                                                                                                                                  
+                                        <button onClick={() => { fileInputRef.current?.click(); setDropdownOpen(false); }} className="w-full text-left px-4 py-2 text-sm           
+                                        text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800">                                                                                   
+                                            Edit Photo
+                                    </button>                                                                                                   
+                                </div> 
+                            )}
+                        </div>
                     </div>
                 </div>
 
                 {/* divider */}
-                <div className="border-t border-zinc-100 dark:border-zinc-800 mb-6" />
+                <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
                 {/* posts grid */}
                 {images.length === 0 ?
@@ -374,7 +426,7 @@ export default function Profile() {
                     /* map posts */
                     <div className="grid grid-cols-3 gap-1 w-full">
                         {images.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-square relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
                                 <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
 
                                 {/* add x button if in editMode */} 
@@ -441,16 +493,17 @@ export default function Profile() {
 
             {/* image detail modal */}
             {selectedImage && (
-                <Modal onClose={() => setSelectedImage(null)}>
+                <Modal onClose={() => {setSelectedImage(null); setError("");}}>
                     <div className="flex">
-                        <div className="relative aspect-square w-2/3">
+                        <div className="relative aspect-[4/5] w-2/3">
                             <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
                         </div>
                         <div className="flex flex-col gap-2 p-5 pt-10 w-1/3">
                             <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
-                                onClick={() => router.push(`/analyze/${selectedImage.image_id}?user_id=${user_id}&image_url=${encodeURIComponent(selectedImage.url)}`)}>
-                                {analyzeLoading ? "Redirecting..." : "Analyze"}
+                                onClick={() => handleAnalyze(selectedImage.image_id, selectedImage.url)}>
+                                {analyzeLoading ? "Analyzing..." : "Analyze"}
                             </button> 
+                            {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
                             <div className="flex items-center justify-between mt-auto">
                                 <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
                                 <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
