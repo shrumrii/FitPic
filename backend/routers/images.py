@@ -8,7 +8,7 @@ import json
 import requests
 from google import genai
 from google.genai import types
-from gemini.model_config import ANALYZE_CONFIG, VALIDATE_CONFIG, schema
+from gemini.model_config import ANALYZE_CONFIG, HIGHER_ANALYZE_CONFIG, VALIDATE_CONFIG, schema
 
 from logger import get_logger 
 
@@ -93,41 +93,78 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
             "message": "Failed to upload image."
         }
     
+def call_gemini(image_bytes, max_tokens): 
+    
+    config_type = ANALYZE_CONFIG if max_tokens == 800 else HIGHER_ANALYZE_CONFIG
+    #prompt gemini 
+    response = client.models.generate_content(
+    model="gemini-3-flash-preview",
+    config=config_type, 
+    contents=[
+        types.Part.from_bytes(
+            data=image_bytes,
+            mime_type='image/jpeg',
+        ), 
+        "Analyze this image and look at the whole outfit. Give a quick style tip. For tags, identify the color, style (e.g. streetwear, minimalist, casual), occasion (e.g. everyday, formal, party), and season."
+    ] 
+    )
+
+    #return gemini response 
+    print(response.text)  
+    parsed = json.loads(response.text)
+    analysis = parsed.get("analysis", "")
+    tags = parsed.get("tags", {})
+
+    return analysis, tags
+
 #analyze image 
 @router.get("/images/{image_id}/analyze")
 async def analyze_image(image_id: str): 
 
     try: 
-
         #get image bytes from db 
         query = supabase.table("images").select("url").eq("image_id", image_id).execute() 
         image_url = query.data[0]["url"] 
         image_bytes = requests.get(image_url).content 
 
-        #prompt gemini 
-        response = client.models.generate_content(
-        model="gemini-3-flash-preview",
-        config=ANALYZE_CONFIG, 
-        contents=[
-            types.Part.from_bytes(
-                data=image_bytes,
-                mime_type='image/jpeg',
-            ), 
-            "Analyze this image and look at the whole outfit. Give a quick style tip. For tags, identify the color, style (e.g. streetwear, minimalist, casual), occasion (e.g. everyday, formal, party), and season."
-        ] 
-        )
+        analysis, tags = call_gemini(image_bytes, max_tokens=800)
 
-        #return gemini response 
-        print(response.text)  
-        parsed = json.loads(response.text)
-        analysis = parsed.get("analysis", "")
-        tags = parsed.get("tags", {})
+        #update supabase with analysis and tags
+        supabase.table("images").update({
+            "analysis": analysis,
+            "tags": tags
+        }).eq("image_id", image_id).execute() 
 
         return { 
             "success": True, 
             "analysis": analysis, 
             "tags": tags 
         } 
+    
+    except json.JSONDecodeError as e:
+        
+        #retry gemini call with more tokens if json decode error
+        logger.error(f"{image_id} ran into JSON Decode Error.Most likely due to malformed JSON from not enough tokens: {e}")
+        try:  
+            analysis, tags = call_gemini(image_bytes, max_tokens=1200)
+
+            #update supabase with analysis and tags
+            supabase.table("images").update({
+                "analysis": analysis,
+                "tags": tags
+            }).eq("image_id", image_id).execute() 
+
+            return { 
+                "success": True, 
+                "analysis": analysis, 
+                "tags": tags 
+            } 
+        except json.JSONDecodeError as e: 
+            logger.error(f"{image_id} still ran into JSON Decode Error after trying with more tokens: {e}")
+            return { 
+                "success": False, 
+                "message": "Failed to analyze image."
+            }   
     
     except Exception as e: 
         logger.error(f"Failed to analyze {image_id}: {e}")

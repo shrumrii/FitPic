@@ -26,7 +26,16 @@ ANALYZE_CONFIG = types.GenerateContentConfig(
     system_instruction=system_instruction, 
     thinking_config=types.ThinkingConfig(thinking_level="low"),
     temperature=0.5,
-    max_output_tokens=400, 
+    max_output_tokens=800, 
+    response_mime_type="application/json",
+    response_schema=schema
+)
+
+HIGHER_ANALYZE_CONFIG = types.GenerateContentConfig(
+    system_instruction=system_instruction, 
+    thinking_config=types.ThinkingConfig(thinking_level="low"),
+    temperature=0.5,
+    max_output_tokens=1200, 
     response_mime_type="application/json",
     response_schema=schema
 )
@@ -37,5 +46,3 @@ VALIDATE_CONFIG = types.GenerateContentConfig(
     temperature=0.5,
     max_output_tokens=10
 )
-
-

@@ -11,12 +11,14 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const searchParams = useSearchParams();                                                                                                    
     const user_id = searchParams.get("user_id") ?? undefined; 
     const image_url = decodeURIComponent(searchParams.get("image_url") ?? "") || undefined; 
-    const analysis = decodeURIComponent(searchParams.get("analysis") ?? "") || undefined; 
-    const [loading, setLoading] = useState(false);  
+    const analysis = decodeURIComponent(searchParams.get("analysis") ?? "") || undefined;
+    const tagsParam = searchParams.get("tags");
+    const initialTags = tagsParam ? JSON.parse(decodeURIComponent(tagsParam)) : null;
+    const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
-    const [imageLoaded, setImageLoaded] = useState(false); 
+    const [imageLoaded, setImageLoaded] = useState(false);
     const router = useRouter();
-    const [redoAnalysis, setRedoAnalysis] = useState(""); 
+    const [redoResult, setRedoResult] = useState<{ analysis: string, tags: { color: string, style: string, occasion: string, season: string } } | null>(null);
 
     const analyze = async () => { 
         setError(""); 
@@ -36,7 +38,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 return; 
             }
 
-            setRedoAnalysis(result.analysis); 
+            setRedoResult({ analysis: result.analysis, tags: result.tags });
 
         } catch (error) { 
             console.error(error); 
@@ -69,11 +71,22 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                 <p className="text-sm text-red-500 mb-4">{error}</p>
                                 <button className="text-sm text-zinc-500 hover:text-black dark:hover:text-white" onClick={() => analyze()}>Try again</button>
                             </div>
-                        ) : (   
-                            <> 
-                                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap">{redoAnalysis || analysis}</p>
+                        ) : (
+                            <>
+                                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed whitespace-pre-wrap mb-4">{redoResult?.analysis || analysis}</p>
+
+                                {(redoResult?.tags || initialTags) && (
+                                    <div className="flex flex-wrap gap-2 mb-6">
+                                        {Object.entries(redoResult?.tags || initialTags).map(([key, value]) => (
+                                            <span key={key} className="px-3 py-1 rounded-full text-xs bg-zinc-100 dark:bg-zinc-800 text-zinc-700 dark:text-zinc-300">
+                                                {String(value)}
+                                            </span>
+                                        ))}
+                                    </div>
+                                )}
+
                                 <button className="text-sm text-zinc-500 hover:text-black dark:hover:text-white" onClick={() => analyze()}>Analyze again</button>
-                            </> 
+                            </>
                         )}
                     </div>
                 </div>

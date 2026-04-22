@@ -86,7 +86,7 @@ export default function UploadPage() {
                 setError(result.message); 
                 return; 
             }
-            router.push(`/analyze/${image_id}?user_id=${user_id}&image_url=${encodeURIComponent(image_url)}&analysis=${encodeURIComponent(result.analysis)}`); 
+            router.push(`/analyze/${image_id}?user_id=${user_id}&image_url=${encodeURIComponent(image_url)}&analysis=${encodeURIComponent(result.analysis)}&tags=${encodeURIComponent(JSON.stringify(result.tags))}`);
 
         } catch (error) { 
             console.error(error); 
