@@ -1,5 +1,5 @@
 "use client";
-import Navbar from "@/components/navbar"
+import Sidebar from "@/components/sidebar"; 
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -85,10 +85,10 @@ export default function Favorites() {
     if (loading || loadingFavorites) return <Spinner/>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-4xl mx-auto px-6 py-8">
-                <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/> 
+            <main className="w-full px-6 py-8">
+                <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     My Favorites
                 </h1>
 

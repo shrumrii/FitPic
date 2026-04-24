@@ -11,6 +11,7 @@ import ConfirmModal from "@/components/confirmModal";
 import Heart from "@/components/Heart";
 import Link from "next/link";
 import { loggedFetch } from "@/lib/api";
+import Sidebar from "@/components/sidebar";
 
 
 export default function Profile() {
@@ -331,9 +332,9 @@ export default function Profile() {
     if (!fetched) return <Spinner/>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-4xl mx-auto px-6 py-8">
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/> 
+            <main className="w-full px-6 py-8">
 
                 {/* profile header */}
                 <div className="flex items-center gap-6 mb-8">
@@ -426,8 +427,18 @@ export default function Profile() {
                     /* map posts */
                     <div className="grid grid-cols-3 gap-1 w-full">
                         {images.map((image) => (
-                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] relative overflow-hidden bg-zinc-100 dark:bg-zinc-800">
-                                <Image src={image.url} alt="fit" fill className="object-cover hover:opacity-90 transition-opacity" />
+                            <div key={image.image_id} onClick={() => setSelectedImage(image)} className="cursor-pointer aspect-[4/5] group relative overflow-hidden bg-zinc-100 dark:bg-zinc-800 ">
+                                <Image src={image.url} alt="fit" fill className="object-cover group-hover:opacity-90 transition-opacity" />
+                                
+                                {/* hover mode - show like heart and analyze button */}
+                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center p-3 opacity-0 group-hover:opacity-100"> 
+                                    <button
+                                        onClick={(e) => {e.stopPropagation(); handleAnalyze(image.image_id, image.url);}} 
+                                        disabled={analyzeLoading}
+                                        className="text-sm text-white bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 w-fit transition-colors"> 
+                                        {analyzeLoading ? "Analyzing..." : "Analyze"}
+                                    </button> 
+                                </div> 
 
                                 {/* add x button if in editMode */} 
                                 {editMode && (                                                                                                                             
@@ -442,6 +453,8 @@ export default function Profile() {
                                     </button>                                                                                                                              
                                 )}  
                             </div>
+
+
                         ))}
                     </div>
                 }

@@ -8,6 +8,7 @@ import Modal from "@/components/modal";
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
 import { loggedFetch } from "@/lib/api";
+import Sidebar from "@/components/sidebar";
 
 export default function Dashboard() {
 
@@ -212,36 +213,40 @@ export default function Dashboard() {
     if (!fetched) return <Spinner/>;
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-4xl mx-auto px-6 py-8">
-                <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
-                    My Feed
-                </h1>
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/>
+            <main className="w-full px-6 py-8">
 
-                {/* filter slicer */}
-                <div className="relative mb-6" ref={dropdownRef}>
-                    <button 
-                        onClick={() => setDropdownOpen(prev => !prev)}
-                        className="text-sm px-4 py-1.5 rounded-full border border-zinc-200 text-zinc-600 dark:text-zinc-400 flex items-center gap-2"
-                    > 
-                        {filterLabels[filterMode]} <span>▾</span>
-                    </button>
+                {/* Gallery top bar */}
+                <div className="flex items-center justify-between"> 
+                    <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white mb-6">
+                        My Feed
+                    </h1>
 
-                    {dropdownOpen && (
-                        <div className="absolute top-10 left-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md z-10 w-36">                                                                                                                                
-                            {(["recent", "most_liked"] as const).map((option) => (
-                                <button                                                                                                                    
-                                    key={option}            
-                                    onClick={() => { setFilterMode(option); setDropdownOpen(false);}}                                                     
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${filterMode === option ?
-                    "font-semibold" : "text-zinc-500"}`}                                                                                                       
-                                >                           
-                                    {filterLabels[option]}                                                                                                 
-                                </button>                 
-                            ))}                                                                                                                            
-                        </div> 
-                    )}
+                    {/* filter slicer */}
+                    <div className="relative mb-6" ref={dropdownRef}>
+                        <button 
+                            onClick={() => setDropdownOpen(prev => !prev)}
+                            className="text-sm px-4 py-2 rounded-full border border-zinc-200 text-base text-zinc-600 dark:text-zinc-400 flex items-center gap-2"
+                        > 
+                            {filterLabels[filterMode]} <span>▾</span>
+                        </button>
+
+                        {dropdownOpen && (
+                            <div className="absolute top-10 right-0 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-700 rounded-lg shadow-md z-10 w-36">                                                                                                                                
+                                {(["recent", "most_liked"] as const).map((option) => (
+                                    <button                                                                                                                    
+                                        key={option}            
+                                        onClick={() => { setFilterMode(option); setDropdownOpen(false);}}                                                     
+                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-zinc-100 dark:hover:bg-zinc-800 ${filterMode === option ?
+                        "font-semibold" : "text-zinc-500"}`}                                                                                                       
+                                    >                           
+                                        {filterLabels[option]}                                                                                                 
+                                    </button>                 
+                                ))}                                                                                                                            
+                            </div> 
+                        )}
+                    </div>
                 </div>
 
                 {feed.length === 0 ?

@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { getUser } from "@/lib/getUser";
 import { loggedFetch } from "@/lib/api";
+import Sidebar from "@/components/sidebar";
 
 
 export default function Friend() {
@@ -142,10 +143,10 @@ export default function Friend() {
     } 
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-xl mx-auto px-6 py-8">
-                <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/>
+            <main className="w-full max-w-sm mx-auto px-6 py-8 px-8">
+                <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     Find Friends
                 </h1>
 

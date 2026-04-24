@@ -10,17 +10,16 @@ schema = {
         "tags": { 
             "type": "object", 
             "properties": { 
-                "color": {"type": "string"}, 
-                "style": {"type": "string"}, 
-                "occasion": {"type": "string"}, 
+                "color": {"type": "array", "items": {"type": "string"}},
+                "style": {"type": "array", "items": {"type": "string"}}, 
                 "season": {"type": "string"}
             }, 
-            "required": ["color", "style", "occasion", "season"]
+            "required": ["color", "style", "season"]
         }
     }
 }
 
-system_instruction = "You are an expert fashion stylist. Return JSON with analysis (a short style tip) and tags containing color, style, occasion, and season."
+system_instruction = "You are an expert fashion stylist. Return JSON with analysis (a short style tip) and tags containing color, style, and season."
 
 ANALYZE_CONFIG = types.GenerateContentConfig(
     system_instruction=system_instruction, 

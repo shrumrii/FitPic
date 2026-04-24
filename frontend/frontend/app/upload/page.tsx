@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Navbar from "@/components/navbar";
 import { loggedFetch } from "@/lib/api";
 import { useUser } from "@/context/userContext";
+import Sidebar from "@/components/sidebar";
 
 export default function UploadPage() {
 
@@ -97,10 +98,10 @@ export default function UploadPage() {
     }
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/> 
             <main className="w-full max-w-sm mx-auto px-6 py-8">
-                <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
+                <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     Upload a FitPic
                 </h1>
 

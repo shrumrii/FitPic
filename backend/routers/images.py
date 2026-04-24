@@ -124,6 +124,7 @@ async def analyze_image(image_id: str):
     try: 
         #get image bytes from db 
         query = supabase.table("images").select("url").eq("image_id", image_id).execute() 
+
         image_url = query.data[0]["url"] 
         image_bytes = requests.get(image_url).content 
 
@@ -172,4 +173,165 @@ async def analyze_image(image_id: str):
             "success": False, 
             "message": "Failed to analyze image."
         }
+
+class TagRequest(BaseModel):                                                                                                               
+    tag_name: str
+
+#add tags to image 
+@router.post("/images/{image_id}/tag")
+async def add_tags(image_id: str, request: TagRequest): 
+
+    try: 
+        #check if tag already exists in tags table
+        tag_query = supabase.table("tags").select("*").eq("name", request.tag_name).execute() 
+
+        if tag_query.data: 
+            tag_id = tag_query.data[0]["tag_id"] 
+        else: 
+            return { 
+                "success": False, 
+                "message": f"Tag '{request.tag_name}' does not exist."
+            }
+        
+        #insert into junction table
+        supabase.table("image_tags").insert({
+            "image_id": image_id,
+            "tag_id": tag_id
+        }).execute()
+
+        return { 
+            "success": True, 
+            "message": "Tag successfully added to image."
+        } 
+
+    except Exception as e: 
+        logger.error(f"Failed to add tag to {image_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to add tag to image."
+        }
+
+#get tags for specific image
+@router.get("/images/{image_id}/tags")
+async def get_tags(image_id: str): 
+
+    try: 
+
+        query = supabase.table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
+        if not query.data: 
+            return { 
+                "success": True, 
+                "tags": [] 
+            }
+        
+        tags = [x["tags"] for x in query.data]
+        return { 
+            "success": True, 
+            "tags": tags 
+        }
+    except Exception as e: 
+        logger.error(f"Failed to get tags for {image_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get tags for image."
+        }
+
+class TagsUpdateRequest(BaseModel):                                                                                                        
+    tag_names: list[str]                    
+
+#delete tags - select list of tags then delete on frontend 
+@router.delete("/images/{image_id}/tags")
+async def delete_tags(image_id: str, requests: TagsUpdateRequest):
+
+    try: 
+        tag_names = requests.tag_names
+
+        #get tag ids for tag names
+        query = supabase.table("tags").select("*").in_("name", tag_names).execute() 
+        if not query.data: 
+            return { 
+                "success": True, 
+                "message": "No tags to delete."
+            } 
+        tag_ids = [x["tag_id"] for x in query.data]
+
+        #delete from junction table 
+        supabase.table("image_tags").delete().eq("image_id", image_id).in_("tag_id", tag_ids).execute() 
+
+        return { 
+            "success": True, 
+            "message": "Tags successfully deleted from image."
+        }
+    except Exception as e: 
+        logger.error(f"Failed to delete tags from {image_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to delete tags from image."
+        } 
+
+def fuzzy_match_tag(tag: str) -> str | None: 
+
+    cleaned = tag.strip().lower()
+    query = supabase.table("tags").select("name").ilike("name", f"%{cleaned}%").limit(1).execute()
+
+    if query.data: 
+        return query.data[0]["name"]
+    
+    #retry for each word in case gemini returns tags with extra words which bypass ilike
+    for word in cleaned.split(): 
+        if (len(word) < 3): #bypass short words like in, on, at, etc. 
+            continue
+        query = supabase.table("tags").select("name").ilike("name", f"%{word}%").limit(1).execute() 
+        if query.data: 
+            return query.data[0]["name"]
+    
+    return None 
+
+class saveToWardrobeRequest(BaseModel): 
+    color: list[str] | None = None
+    style: list[str] | None = None
+    season: str | None = None 
+
+@router.post("/images/{image_id}/save-to-wardrobe")
+async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest):
+
+    try: 
+        matched_tags = [] 
+        #loop thru color tags
+        if request.color:
+            for color in request.color: 
+                matched = fuzzy_match_tag(color) 
+                if matched:
+                    matched_tags.append(matched)
+        #loop thru style tags
+        if request.style:
+            for style in request.style: 
+                matched = fuzzy_match_tag(style) 
+                if matched: 
+                    matched_tags.append(matched)
+        #loop thru season tag
+        if request.season:
+            matched = fuzzy_match_tag(request.season) 
+            if matched: 
+                matched_tags.append(matched)
+
+        #get all tag ids for all matched tags
+        query = supabase.table("tags").select("*").in_("name", matched_tags).execute() 
+        if query.data: 
+            rows_to_upsert = [{"image_id": image_id, "tag_id": x["tag_id"]} for x in query.data] 
+            #upsert into junction table for wardrobe analysis 
+            supabase.table("image_tags").upsert(rows_to_upsert).execute()
+        
+        return { 
+            "success": True, 
+            "message": "Image successfully saved to wardrobe."
+        }
+    except Exception as e:
+        logger.error(f"Failed to save {image_id} to wardrobe: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to save image to wardrobe."
+        }
+            
+
 

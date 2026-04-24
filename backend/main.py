@@ -1,13 +1,13 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from PIL import Image 
-import io 
-from database import supabase #import client from database.py 
-from pydantic import BaseModel 
-import uuid 
+from PIL import Image
+import io
+from database import supabase #import client from database.py
+from pydantic import BaseModel
+import uuid
 from logger import request_logger, frontend_logger
 
-from routers import users, images, favorites 
+from routers import users, images, favorites, tags
 
 app = FastAPI() 
 
@@ -27,6 +27,7 @@ async def log_requests(request, call_next):
 app.include_router(users.router)
 app.include_router(images.router) 
 app.include_router(favorites.router) 
+app.include_router(tags.router)
 
 @app.get("/") 
 async def root(): 
