@@ -17,11 +17,16 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [redoResult, setRedoResult] = useState<{ analysis: string; tags: { color: string; style: string; occasion: string; season: string } } | null>(null);
+    const [redoResult, setRedoResult] = useState<{ analysis: string; tags: { color: string[]; style: string[]; season: string } } | null>(null);
     const router = useRouter();
 
     const displayAnalysis = redoResult?.analysis || analysis;
     const displayTags = redoResult?.tags || initialTags;
+
+    const [saveLoading, setSaveLoading] = useState(false); 
+    const [saveError, setSaveError] = useState("");
+    const [saved, setSaved] = useState(false);
+
 
     const analyze = async () => {
         setError("");
@@ -42,6 +47,42 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             setLoading(false);
         }
     };
+    
+    const handleSaveToWardrobe = async () => { 
+
+        try {
+            setSaveLoading(true);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/save-to-wardrobe`, {
+                method: "POST", 
+                body: JSON.stringify({ color: displayTags.color, style: displayTags.style, season: displayTags.season }),
+                headers: { "Content-Type": "application/json" }
+
+            }, user_id)
+        
+            if (!response.ok) { 
+                console.error("Could not save to wardrobe.")
+                throw new Error("Could not save to wardrobe.")
+            }
+
+            const result = await response.json();
+            
+            if (!result.success) { 
+                setSaveError(result.message || "Could not save to wardrobe. Try again.");
+                return; 
+            }
+            
+            //save successful 
+            setSaved(true); 
+            
+            
+
+        } catch (error) { 
+            console.error("Could not save to wardrobe.", error);
+            setSaveError("Could not save to wardrobe. Try again.");
+        } finally { 
+            setSaveLoading(false);
+        }
+    }
 
     return (
         <div className="flex min-h-screen bg-white dark:bg-black">
@@ -118,13 +159,22 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
 
                                 <div className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
                                     <div className="flex-1">
-                                        <p className="text-sm font-medium text-white">Save to wardrobe</p>
+                                        <button 
+                                            className="text-sm font-medium text-white" 
+                                            onClick={() => saved ? router.push("/wardrobe") : handleSaveToWardrobe()}
+                                        >
+                                            {saveLoading ? "Saving to wardrobe..." : saved ? "Saved to wardrobe! Go to wardrobe?" : "Save to wardrobe"}
+                                        </button>
                                         <p className="text-xs text-white/50 mt-0.5">Adds tags to your style profile</p>
                                     </div>
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M3 8h10M9 4l4 4-4 4"/>
                                     </svg>
                                 </div>
+
+                                {saveError && (
+                                    <p className="mt-2 text-xs text-red-500 text-center">{saveError}</p>
+                                )}
                             </>
                         ) : (
                             <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-10 text-center">

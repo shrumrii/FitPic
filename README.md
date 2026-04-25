@@ -103,5 +103,7 @@ CREATE TABLE follows (
       PRIMARY KEY (follower_id, following_id)
   );
 
+https://aistudio.google.com/app/api-keys?projectFilter=gen-lang-client-0725298316
+
 
 
