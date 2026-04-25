@@ -91,7 +91,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
 
                 <button
                     onClick={() => router.back()}
-                    className="text-xs text-zinc-400 hover:text-black dark:hover:text-white mb-6 inline-flex items-center gap-1"
+                    className="text-xs text-zinc-400 hover:text-brand-pink dark:hover:text-brand-orange mb-6 inline-flex items-center gap-1"
                 >
                     ← Back
                 </button>

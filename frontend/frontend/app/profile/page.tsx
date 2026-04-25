@@ -355,10 +355,10 @@ export default function Profile() {
                         </div>
 
                         <div className="flex gap-4">
-                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-amber-400 transition-colors font-medium" onClick={getFollowers}>
+                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-brand-pink dark:hover:text-brand-orange transition-colors font-medium" onClick={getFollowers}>
                                 Followers
                             </button>
-                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-amber-400 transition-colors font-medium" onClick={getFollowing}>
+                            <button className="text-sm text-zinc-600 dark:text-zinc-400 hover:text-brand-pink dark:hover:text-brand-orange transition-colors font-medium" onClick={getFollowing}>
                                 Following
                             </button>
                         </div>
@@ -375,14 +375,14 @@ export default function Profile() {
                         />
 
                         <button
-                            className={`text-sm font-medium border rounded-lg px-4 py-1.5 w-28 transition-colors ${editMode ? "border-amber-400 text-amber-400" : "border-zinc-200 dark:border-zinc-700 hover:border-amber-400 hover:text-amber"}`}
+                            className={`text-sm font-medium border rounded-lg px-4 py-1.5 w-28 transition-colors ${editMode ? "text-brand-pink border-brand-pink dark:text-brand-orange dark:border-brand-orange" : "border-zinc-200 dark:border-zinc-700 hover:text-brand-pink hover:border-brand-pink dark:hover:text-brand-orange dark:hover:border-brand-orange"}`}
                             onClick={() => setEditMode(!editMode)}
                         >
                             Edit Mode
                         </button>
 
                         <button
-                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-1.5 w-28 hover:border-red-400 hover:text-red-400 transition-colors"
+                            className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-1.5 w-28 hover:text-brand-pink hover:border-brand-pink dark:hover:text-brand-orange dark:hover:border-brand-orange transition-colors"
                             onClick={handleSignout}
                         >
                             Sign out

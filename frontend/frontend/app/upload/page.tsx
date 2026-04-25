@@ -116,7 +116,7 @@ export default function UploadPage() {
 
                 {/* upload zone */}
                 <div
-                    className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-4 py-14 px-6 cursor-pointer hover:border-amber-400 transition-colors"
+                    className="w-full border-2 border-dashed border-zinc-200 dark:border-zinc-700 rounded-xl flex flex-col items-center justify-center gap-4 py-14 px-6 cursor-pointer hover:border-brand-pink dark:hover:border-brand-orange transition-colors"
                     onClick={() => fileInputRef.current?.click()}
                 >
                     {previewUrl ? (
@@ -133,7 +133,7 @@ export default function UploadPage() {
 
                 {selectedFile && (
                     <button
-                        className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                        className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-brand-pink dark:enabled:hover:bg-brand-orange enabled:hover:text-white transition-colors dark:bg-white dark:text-black disabled:opacity-50"
                         onClick={handleUpload}
                         disabled={uploading || !!uploadedImage}
                     >
@@ -154,13 +154,13 @@ export default function UploadPage() {
 
                 {uploadedImage && (
                     <div className="flex flex-col items-center gap-3 mt-6">
-                        <button className="mt-4 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors disabled:opacity-50 disabled:hover:border-zinc-200 disabled:hover:text-inherit"
+                        <button className="mt-4 text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-brand-pink hover:text-brand-pink dark:hover:border-brand-orange dark:hover:text-brand-orange transition-colors disabled:opacity-50 disabled:hover:border-zinc-200 disabled:hover:text-inherit"
                             onClick={() => router.push("/profile")}
                             disabled={analyzeLoading}>
                             View on Profile
                         </button>
 
-                        <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
+                        <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-brand-pink hover:text-brand-pink dark:hover:border-brand-orange dark:hover:text-brand-orange transition-colors"
                             onClick={() => handleAnalyze(uploadedImage.id, uploadedImage.url)}>
                             {analyzeLoading ? "Analyzing..." : "Analyze this picture"}
                         </button> 

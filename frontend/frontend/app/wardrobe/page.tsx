@@ -206,7 +206,7 @@ export default function Wardrobe() {
                     <div className="col-span-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
                         <div className="flex items-center justify-between mb-3">
                             <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400">Recent fits</p>
-                            <button className="text-xs text-zinc-400 hover:text-black dark:hover:text-white">View all →</button>
+                            <button className="text-xs text-zinc-400 hover:text-brand-pink dark:hover:text-brand-orange">View all →</button>
                         </div>
                         <div className="grid grid-cols-5 gap-2">
                             {recentImages.length === 0 ? <p className="text-sm text-zinc-400">No fits analyzed yet. </p>

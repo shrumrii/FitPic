@@ -158,10 +158,10 @@ export default function Friend() {
                             if (!e.target.value) setSearching(false);
                         }}
                         onKeyDown={(e) => { if (e.key === "Enter" && usernameSearchString) handleSearch(); }}
-                        className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2.5 w-full text-sm focus:outline-none focus:border-amber-400 transition-colors dark:bg-zinc-900 dark:text-white"
+                        className="border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2.5 w-full text-sm focus:outline-none focus:border-brand-pink dark:focus:border-brand-orange transition-colors dark:bg-zinc-900 dark:text-white"
                     />
                     <button
-                        className="bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 enabled:hover:bg-amber-400 enabled:hover:text-black transition-colors dark:bg-white dark:text-black disabled:opacity-50 whitespace-nowrap"
+                        className="bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 enabled:hover:bg-brand-pink dark:enabled:hover:bg-brand-orange enabled:hover:text-white transition-colors dark:bg-white dark:text-black disabled:opacity-50 whitespace-nowrap"
                         onClick={handleSearch}
                         disabled={!usernameSearchString || loading}
                     >
@@ -180,7 +180,7 @@ export default function Friend() {
                                     <div key={user.user_id} className="flex items-center justify-between py-3">
                                         <p className="text-sm font-medium text-black dark:text-white">{user.username}</p>
                                         <button
-                                            className="text-sm font-medium rounded-lg px-4 py-1.5 transition-colors bg-black text-white hover:bg-amber-400 hover:text-black dark:bg-white dark:text-black"
+                                            className="text-sm font-medium rounded-lg px-4 py-1.5 transition-colors bg-black text-white hover:bg-brand-pink dark:hover:bg-brand-orange hover:text-white dark:bg-white dark:text-black"
                                             onClick={() => followedList.includes(user.user_id) ? removeFriend(user.user_id) : addFriend(user.user_id)}
                                         >
                                             {followedList.includes(user.user_id) ? "Following" : "Follow"}
