@@ -9,6 +9,7 @@ import requests
 from google import genai
 from google.genai import types
 from gemini.model_config import ANALYZE_CONFIG, HIGHER_ANALYZE_CONFIG, VALIDATE_CONFIG, schema
+from datetime import datetime, timezone  
 
 from logger import get_logger 
 
@@ -133,7 +134,8 @@ async def analyze_image(image_id: str):
         #update supabase with analysis and tags
         supabase.table("images").update({
             "analysis": analysis,
-            "tags": tags
+            "tags": tags,
+            "analyzed_at": datetime.now(timezone.utc).isoformat()
         }).eq("image_id", image_id).execute() 
 
         return { 
@@ -152,7 +154,8 @@ async def analyze_image(image_id: str):
             #update supabase with analysis and tags
             supabase.table("images").update({
                 "analysis": analysis,
-                "tags": tags
+                "tags": tags, 
+                "analyzed_at": datetime.now(timezone.utc).isoformat()
             }).eq("image_id", image_id).execute() 
 
             return { 
@@ -332,6 +335,7 @@ async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest):
             "success": False, 
             "message": "Failed to save image to wardrobe."
         }
-            
+
+
 
 

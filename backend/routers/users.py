@@ -6,6 +6,7 @@ from pydantic import BaseModel
 import uuid 
 from logger import get_logger 
 
+
 router = APIRouter()
 logger = get_logger(__name__) 
 
@@ -14,7 +15,7 @@ class UserCreate(BaseModel): #modify as needed when i change the users table sch
         email: str
         username: str
         age: int | None = None 
-
+ 
 #create user, match supabase auth user creation 
 @router.post("/users/create")
 async def create_user(user: UserCreate): 
@@ -41,6 +42,8 @@ async def create_user(user: UserCreate):
         }
 
 #search for username - used for friend search feature
+
+#
 @router.get("/users/search")
 async def search_username(username: str): 
 
@@ -398,4 +401,23 @@ async def save_rankings(user_id: str, rankings: RankingList):
         return { 
             "success": False, 
             "message": "Failed to save rankings" 
+        }
+    
+#get all user images that have been analyzed 
+@router.get("/users/{user_id}/analyzed-images")
+async def get_analyzed_images(user_id: str):
+
+    try: 
+        query = supabase.table("images").select("image_id, url, analyzed_at").eq("user_id", user_id).not_.is_("analyzed_at", "null").limit(10).order("analyzed_at", desc=True).execute()
+        analyzed_images = query.data
+
+        return { 
+            "success": True, 
+            "data": analyzed_images
+        }
+    except Exception as e: 
+        logger.error(f"Failed to get analyzed images for {user_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get analyzed images."
         }

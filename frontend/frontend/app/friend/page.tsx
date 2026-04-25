@@ -138,8 +138,6 @@ export default function Friend() {
         } catch (error) { 
             console.error(error);
         }
-
-
     } 
 
     return (
