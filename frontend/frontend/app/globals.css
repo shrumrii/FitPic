@@ -3,25 +3,28 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --sidebar-bg: #FF724C;  
 }
+                  
+@variant dark (&:where(.dark, .dark *));
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
-  --color-brand-pink: #F88379;              
-  --color-brand-orange-light: #FF8559;                                                                                                     
+  --color-brand-pink: #F88379;
+  --color-brand-orange-light: #FF8559;
   --color-brand-orange: #FF724C;
-  --color-brand-orange-dark: #BE5103; 
+  --color-brand-orange-dark: #BE5103;
+  --color-sidebar: var(--sidebar-bg);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
+.dark {
+    --background: #0a0a0a;                    
     --foreground: #ededed;
-  }
-}
+    --sidebar-bg: #BE5103;                                                                                                                   
+  } 
 
 body {
   background: var(--background);

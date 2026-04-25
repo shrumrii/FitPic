@@ -9,6 +9,7 @@ import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
 import { loggedFetch } from "@/lib/api";
 import Sidebar from "@/components/sidebar";
+import { useTheme } from "next-themes"; 
 
 export default function Dashboard() {
 
@@ -24,6 +25,7 @@ export default function Dashboard() {
     const [dropdownOpen, setDropdownOpen] = useState(false); 
     const dropdownRef = useRef<HTMLDivElement>(null); 
     const [filterLoading, setFilterLoading] = useState(false); 
+    const { theme, setTheme } = useTheme(); 
 
     const filterLabels = {                                                                                                                     
         recent: "Recent",                   
@@ -218,7 +220,7 @@ export default function Dashboard() {
             <main className="w-full px-6 py-8">
 
                 {/* Gallery top bar */}
-                <div className="flex items-center justify-between"> 
+                <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-semibold tracking-tight text-black dark:text-white mb-6">
                         My Feed
                     </h1>
