@@ -34,7 +34,7 @@ export default function Profile() {
     const [imageToDelete, setImageToDelete] = useState<string | null>(null); 
     const [favoritedImageIDs, setFavoritedImageIDs] = useState<Set<string>>(new Set());
     const [fetched, setFetched] = useState(false);
-    const [analyzeLoading, setAnalyzeLoading] = useState(false); 
+    const [analyzingImageId, setAnalyzingImageId] = useState<string | null>(null);
     const [error, setError] = useState(""); 
     const errorTimeout = useRef<NodeJS.Timeout | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false); 
@@ -310,7 +310,7 @@ export default function Profile() {
     const handleAnalyze = async (image_id: string, image_url: string) => { 
         setError(""); 
         try { 
-            setAnalyzeLoading(true); 
+            setAnalyzingImageId(image_id);
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id); 
 
             if (!response.ok) { 
@@ -330,7 +330,7 @@ export default function Profile() {
             console.error(error); 
             setError(String(error)); 
         } finally { 
-            setAnalyzeLoading(false);  
+            setAnalyzingImageId(null);
         }
     }
 
@@ -449,12 +449,12 @@ export default function Profile() {
                                 <Image src={image.url} alt="fit" fill className="object-cover group-hover:opacity-90 transition-opacity" />
                                 
                                 {/* hover mode - show like heart and analyze button */}
-                                <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-colors flex items-center justify-center p-3 opacity-0 group-hover:opacity-100"> 
+                                <div className={`absolute inset-0 transition-colors flex items-center justify-center p-3 ${analyzingImageId === image.image_id ? "bg-black/40 opacity-100" : analyzingImageId !== null ? "opacity-0 pointer-events-none" : "bg-black/0 group-hover:bg-black/40 opacity-0 group-hover:opacity-100"}`}>
                                     <button
                                         onClick={(e) => {e.stopPropagation(); handleAnalyze(image.image_id, image.url);}} 
-                                        disabled={analyzeLoading}
+                                        disabled={analyzingImageId !== null}
                                         className="text-sm text-white bg-white/20 hover:bg-brand-pink/80 dark:hover:bg-brand-orange/80 hover:text-white rounded-full px-4 py-2 w-fit transition-colors"> 
-                                        {analyzeLoading ? "Analyzing..." : "Analyze"}
+                                        {analyzingImageId === image.image_id ? "Analyzing..." : "Analyze"}
                                     </button> 
                                 </div> 
 
@@ -532,7 +532,7 @@ export default function Profile() {
                         <div className="flex flex-col gap-2 p-5 pt-10 w-1/3">
                             <button className="text-sm font-medium border border-zinc-200 dark:border-zinc-700 rounded-lg px-4 py-2 hover:border-amber-400 hover:text-amber-400 transition-colors"
                                 onClick={() => handleAnalyze(selectedImage.image_id, selectedImage.url)}>
-                                {analyzeLoading ? "Analyzing..." : "Analyze"}
+                                {analyzingImageId === selectedImage.image_id ? "Analyzing..." : "Analyze"}
                             </button> 
                             {error && <p className="text-sm text-red-500 mb-4">{error}</p>}
                             <div className="flex items-center justify-between mt-auto">
