@@ -1,6 +1,7 @@
 "use client"; 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { getUser } from "@/lib/getUser"; 
+import { getUser } from "@/lib/getUser";
+import supabase from "@/lib/supabase";
 
 type UserContextType = { 
     username: string 
@@ -57,9 +58,23 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
         }
     }
 
-    useEffect(() => { 
-        fetchInfo(); 
-    }, []) 
+    useEffect(() => {
+        fetchInfo();
+
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === "SIGNED_IN" || event === "TOKEN_REFRESHED") {
+                fetchInfo();
+            }
+            if (event === "SIGNED_OUT") {
+                setUserID("");
+                setUsername("");
+                setProfilePic(null);
+                setAge("");
+            }
+        });
+
+        return () => subscription.unsubscribe();
+    }, [])
 
     return <UserContext.Provider value={{ username, profilePic, user_id: userID, loading, age, refreshUser: fetchInfo }}>{children}</UserContext.Provider>
 }

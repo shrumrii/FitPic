@@ -65,7 +65,8 @@ export default function Dashboard() {
         const populateDashboard = async () => {
 
             console.log("populateDashboard called");
-            if (user_id == "") return;
+            if (loading) return;
+            if (user_id == "") { setFetched(true); return; }
 
             try {
 
