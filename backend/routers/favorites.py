@@ -14,7 +14,7 @@ logger = get_logger(__name__)
 async def get_favorites(user_id: str): 
 
     try: 
-        query = supabase.table("favorites").select("user_id, users!favorites_user_id_fkey(username), images!favorites_image_id_fkey(image_id, url, created_at)").eq("user_id", user_id).order("created_at", desc=True).execute()
+        query = supabase.table("favorites").select("user_id, images!favorites_image_id_fkey(image_id, url, created_at, users!images_user_id_fkey(username))").eq("user_id", user_id).order("created_at", desc=True).execute()
         favorites = query.data 
 
         return {

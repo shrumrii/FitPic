@@ -31,7 +31,7 @@ export default function Favorites() {
                 //destructure and flatten favorites list
                 setFavorites(result.data.map((item: any) => ({                                                                                             
                     user_id: item.user_id,    
-                    username: item.users.username,                                                                                                 
+                    username: item.images.users.username,                                                                                                 
                     image_id: item.images.image_id,                                                                                                        
                     url: item.images.url,                                                                                                                  
                     created_at: item.images.created_at,                                                                                                            
