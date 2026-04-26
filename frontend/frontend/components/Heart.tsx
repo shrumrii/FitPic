@@ -2,7 +2,7 @@ export default function Heart({ filled, onToggle }: { filled: boolean; onToggle:
     
     return (
         
-        <button className="text-red-500 text-2xl hover:scale-110 transition-transform border-none bg-transparent" 
+        <button className="text-brand-pink text-2xl hover:scale-110 transition-transform border-none bg-transparent" 
             onClick={onToggle}
         >
             {filled ? "♥" : "♡"}    
