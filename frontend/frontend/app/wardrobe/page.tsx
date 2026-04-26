@@ -1,12 +1,11 @@
 "use client";
 import Sidebar from "@/components/sidebar";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, use } from "react";
 import { useUser } from "@/context/userContext";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import Spinner from "@/components/spinner";
 import { loggedFetch } from "@/lib/api";
-import { resolve } from "path";
 
 
 export default function Wardrobe() {
@@ -19,20 +18,22 @@ export default function Wardrobe() {
     const [colorStatsLoading, setColorStatsLoading] = useState(false);
     const [recentImages, setRecentImages] = useState<{ image_id: string, url: string, analyzed_at: string }[]>([]);
     const [imagesCount, setImagesCount] = useState<number | null>(null);
+    const [likesCount, setLikesCount] = useState<number | null>(null);
     const [analysesCount, setAnalysesCount] = useState<number | null>(null);
     const [colorStats, setColorStats] = useState<{ top_5_colors: { color: string, count: number }[] }>({
         top_5_colors: []
     });
     const [styleStats, setStyleStats] = useState<{ top_style: string, top_5: { tag_name: string, tag_count: number, percentage: number }[] }>({
    top_style: "—", top_5: [] })
+    const [fetched, setFetched] = useState(false); 
 
     const [recentImagesError, setRecentImagesError] = useState("");
 
     const stats = [                             
-      { label: "Fits posted", value: imagesCount || "—", sub: "" },                                                                          
-      { label: "Avg. likes", value: "—", sub: "" },                                                                                          
-      { label: "Analyses run", value: analysesCount || "—", sub: "" },                                                                       
-      { label: "Top style", value: styleStats.top_style || "—", sub: "" },                                                                   
+      { label: "Fits Posted", value: imagesCount ?? "—", sub: "" },                                                                          
+      { label: "Total Likes", value: likesCount ?? "—", sub: "" },                                                                                          
+      { label: "Analyses Run", value: analysesCount ?? "—", sub: "" },                                                                       
+      { label: "Top Style", value: styleStats.top_style || "—", sub: "" },                                                                   
     ];   
 
 
@@ -40,9 +41,17 @@ export default function Wardrobe() {
 
     useEffect(() => { 
 
-        if (!user_id) return; 
-
-        Promise.all([handleRecentImages(), getImageCount(), getStyleStats(), getColorStats()]); 
+        const fetchWardrobe = async () => { 
+            if (!user_id) return; 
+            try { 
+                await Promise.all([handleRecentImages(), getImageCount(), getStyleStats(), getColorStats()]); 
+            } catch (error) { 
+                console.error("Error fetching wardrobe data:", error);
+            } finally { 
+                setFetched(true); 
+            }
+        }
+        fetchWardrobe();
     }, [loading, user_id])
 
     //load recently analyzed outfits and get analysis count 
@@ -79,7 +88,7 @@ export default function Wardrobe() {
 
         try { 
             setImagesCountLoading(true);
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images`, undefined, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images?include_likes=true`, undefined, user_id);
             
             if (!response.ok) { 
                 console.log(await response.text());
@@ -91,8 +100,14 @@ export default function Wardrobe() {
                 return;
             }
             
+            console.log(result.data); 
+            //get images count 
             const count = result.data.length; 
             setImagesCount(count); 
+
+            //get likes count 
+            const likes = result.data.reduce((sum: number, item: any) => sum + (item.favorites?.[0]?.count ?? 0), 0); 
+            setLikesCount(likes);
 
         } catch (error) { 
             console.error("Could not fetch image count.", error);
@@ -153,7 +168,7 @@ export default function Wardrobe() {
         
     } 
 
-    if (loading) return <Spinner/>;
+    if (loading || !fetched) return <Spinner/>;
 
     return (
         <div className="flex min-h-screen bg-white dark:bg-black">
@@ -180,15 +195,18 @@ export default function Wardrobe() {
                         <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-4">Style profile</p>
                         <div className="flex flex-col gap-2.5">
                             {styleStats.top_5.length === 0 ? <p className="text-sm text-zinc-400">No style data yet.</p>
-                                : styleStats.top_5.map((row) => (
-                                    <div key={row.tag_name} className="flex items-center gap-3">
-                                        <p className="text-sm text-zinc-600 dark:text-zinc-300 w-24 shrink-0">{row.tag_name}</p>                                  
-                                        <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">                                                   
-                                            <div className="bg-black dark:bg-white h-1.5 rounded-full" style={{ width: `${row.percentage}%` }} />                 
-                                        </div>                                                                                                                     
-                                        <p className="text-xs text-zinc-400 w-8 text-right">{row.percentage}%</p>                                                 
-                                    </div> 
-                                ))
+                                : styleStats.top_5.map((row, i) => {
+                                    const barColors = ["#F88379", "#FF8559", "#FF724C", "#BE5103", "#BE5103"];
+                                    return (
+                                        <div key={row.tag_name} className="flex items-center gap-3">
+                                            <p className="text-sm text-zinc-600 dark:text-zinc-300 w-24 shrink-0">{row.tag_name}</p>
+                                            <div className="flex-1 bg-zinc-100 dark:bg-zinc-800 rounded-full h-1.5">
+                                                <div className="h-1.5 rounded-full" style={{ width: `${row.percentage}%`, backgroundColor: barColors[i] }} />
+                                            </div>
+                                            <p className="text-xs text-zinc-400 w-8 text-right">{row.percentage}%</p>
+                                        </div>
+                                    );
+                                })
                             }   
                         </div>
                     </div>
@@ -197,15 +215,22 @@ export default function Wardrobe() {
                     <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
                         <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-4">Colour palette</p>
                         <div className="flex flex-wrap gap-2 mb-3">
-                            {/* color swatches will go here */}
+                            {/* top 5color swatches here */}
+                            { colorStats.top_5_colors.length === 0 ? <p className="text-sm text-zinc-400">No colours yet.</p> 
+                                : colorStats.top_5_colors.map((c) => (
+                                    <div key={c.color} className="flex flex-col items-center gap-1">
+                                        <div className="rounded-full" style={{ backgroundColor: c.color, width: 32, height: 32 }} />
+                                    </div>
+                                ))
+                            }
                         </div>
-                        <p className="text-sm text-zinc-400">No colours yet.</p>
+
                     </div>
 
                     {/* recent fits — full width */}
                     <div className="col-span-3 bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
                         <div className="flex items-center justify-between mb-3">
-                            <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400">Recent fits</p>
+                            <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400">Recently Analyzed Fits</p>
                             <button className="text-xs text-zinc-400 hover:text-brand-pink dark:hover:text-brand-orange">View all →</button>
                         </div>
                         <div className="grid grid-cols-5 gap-2">

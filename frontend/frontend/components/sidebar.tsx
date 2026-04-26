@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useUser } from "@/context/userContext";
 import { loggedFetch } from "@/lib/api";
 import { useTheme } from "next-themes";
@@ -12,8 +12,8 @@ export default function Sidebar() {
     const pathname = usePathname();
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
-    const [analyzeModalOpen, setAnalyzeModalOpen] = useState(false);
     const { theme, setTheme } = useTheme();
+    const router = useRouter();
 
     useEffect(() => {
         if (!user_id) return;
@@ -158,7 +158,7 @@ export default function Sidebar() {
                 </div>
 
                 <button
-                    onClick={() => setAnalyzeModalOpen(true)}
+                    onClick={() => router.push("/profile?mode=analyze")}
                     className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors w-full text-left text-white/70 hover:bg-white/10 hover:text-white"
                 >
                     <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
@@ -182,19 +182,6 @@ export default function Sidebar() {
                     Upload a FitPic
                 </Link>
             </div>
-
-            {/* analyze modal — empty for now */}
-            {analyzeModalOpen && (
-                <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center" onClick={() => setAnalyzeModalOpen(false)}>
-                    <div className="bg-white dark:bg-zinc-900 rounded-xl p-6 w-96 shadow-lg" onClick={e => e.stopPropagation()}>
-                        <div className="flex items-center justify-between mb-4">
-                            <h2 className="text-sm font-semibold text-black dark:text-white">Analyze an Outfit</h2>
-                            <button onClick={() => setAnalyzeModalOpen(false)} className="text-zinc-400 hover:text-black dark:hover:text-white text-lg">✕</button>
-                        </div>
-                        <p className="text-sm text-zinc-400">Coming soon — pick an outfit to analyze.</p>
-                    </div>
-                </div>
-            )}
 
         </aside>
     );

@@ -1,5 +1,5 @@
 "use client";
-import { useState, use } from "react";
+import { useState, use, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { loggedFetch } from "@/lib/api";
@@ -27,12 +27,19 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const [saveError, setSaveError] = useState("");
     const [saved, setSaved] = useState(false);
 
+    useEffect(() => { 
+        //run analyze as fallback once on mount 
+        if (!analysis) { 
+            analyze(false); 
+        }
+    }, [])
 
-    const analyze = async () => {
+    //refresh param is true if user is clicking "get another take" button, false if it's the initial analyze on page load
+    const analyze = async (refresh: boolean) => {
         setError("");
         try {
             setLoading(true);
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze?refresh=${refresh}`, undefined, user_id);
             if (!response.ok) throw new Error("Could not analyze image.");
             const result = await response.json();
             if (!result.success) {
@@ -114,7 +121,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                         </div>
 
                         <button
-                            onClick={analyze}
+                            onClick={() => analyze(displayAnalysis ? true : false)}
                             disabled={loading}
                             className="mt-3 w-full py-3 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-85 transition-opacity disabled:opacity-50"
                         >
@@ -157,20 +164,16 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                     </div>
                                 )}
 
-                                <div className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity">
-                                    <div className="flex-1">
-                                        <button 
-                                            className="text-sm font-medium text-white" 
-                                            onClick={() => saved ? router.push("/wardrobe") : handleSaveToWardrobe()}
-                                        >
-                                            {saveLoading ? "Saving to wardrobe..." : saved ? "Saved to wardrobe! Go to wardrobe?" : "Save to wardrobe"}
-                                        </button>
-                                        <p className="text-xs text-white/50 mt-0.5">Adds tags to your style profile</p>
-                                    </div>
+                                <button 
+                                    className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    onClick={() => saved ? router.push("/wardrobe") : handleSaveToWardrobe()}
+                                    disabled={saveLoading || !displayAnalysis} 
+                                >
+                                    {saveLoading ? "Saving to wardrobe..." : saved ? "Saved to wardrobe! Go to wardrobe?" : "Save to wardrobe"}
                                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
                                         <path d="M3 8h10M9 4l4 4-4 4"/>
                                     </svg>
-                                </div>
+                                </button> 
 
                                 {saveError && (
                                     <p className="mt-2 text-xs text-red-500 text-center">{saveError}</p>

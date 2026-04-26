@@ -120,9 +120,20 @@ def call_gemini(image_bytes, max_tokens):
 
 #analyze image 
 @router.get("/images/{image_id}/analyze")
-async def analyze_image(image_id: str): 
+async def analyze_image(image_id: str, refresh: bool = False): 
 
     try: 
+
+        if not refresh: 
+            #check if analysis already exists 
+            query = supabase.table("images").select("analysis, tags").eq("image_id", image_id).execute()
+            if query.data and query.data[0].get("analysis"): 
+                return { 
+                    "success": True, 
+                    "analysis": query.data[0]["analysis"],
+                    "tags": query.data[0]["tags"]
+                }
+
         #get image bytes from db 
         query = supabase.table("images").select("url").eq("image_id", image_id).execute() 
 

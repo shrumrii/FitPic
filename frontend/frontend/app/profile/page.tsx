@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import supabase from "@/lib/supabase";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Navbar from "@/components/navbar";
 import Image from "next/image";
 import Spinner from "@/components/spinner";
@@ -12,11 +12,15 @@ import Heart from "@/components/Heart";
 import Link from "next/link";
 import { loggedFetch } from "@/lib/api";
 import Sidebar from "@/components/sidebar";
+import DismissButton from "@/components/dismissButton";
 
 
 export default function Profile() {
 
     const { username, user_id, profilePic, loading, age, refreshUser } = useUser() ?? { username: "", user_id: "", profilePic: null, loading: false, age: "", refreshUser: () => {}};
+    const searchParams = useSearchParams();
+    const mode = searchParams.get("mode") ?? undefined;
+    const [bannerDismissed, setBannerDismissed] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [images, setImages] = useState<{image_id: string, url: string, created_at: string, likes: number }[]>([]);
@@ -35,6 +39,7 @@ export default function Profile() {
     const errorTimeout = useRef<NodeJS.Timeout | null>(null);
     const [dropdownOpen, setDropdownOpen] = useState(false); 
     const dropdownRef = useRef<HTMLDivElement>(null); 
+
 
     const router = useRouter();
 
@@ -416,6 +421,19 @@ export default function Profile() {
                 {/* divider */}
                 <div className="border-t border-zinc-100 dark:border-zinc-800" />
 
+                {/* analyze mode banner - came from sidebar analyze button */}
+                {mode === "analyze" && !bannerDismissed && (
+                    <div className="w-full bg-brand-pink dark:bg-brand-orange-dark border border-brand-pink dark:border-brand-orange-dark rounded-xl px-4 py-3 flex items-center justify-between mb-6"> 
+                        <div className="flex items-center gap-2"> 
+                            <svg className="w-3 h-3" viewBox="0 0 16 16" fill="currentColor">                                                               
+                                <path d="M8 1l1.8 5h5.2l-4.2 3 1.6 5L8 11l-4.4 3 1.6-5L1 6h5.2z"/>                                                                     
+                            </svg> 
+                            <p> Pick an outfit to analyze</p>
+                        </div> 
+                        <DismissButton onDismiss={() => setBannerDismissed(true)}/>
+                    </div>
+                )}
+
                 {/* posts grid */}
                 {images.length === 0 ?
                     <div className="flex w-full items-center justify-center py-24">
@@ -435,7 +453,7 @@ export default function Profile() {
                                     <button
                                         onClick={(e) => {e.stopPropagation(); handleAnalyze(image.image_id, image.url);}} 
                                         disabled={analyzeLoading}
-                                        className="text-sm text-white bg-white/20 hover:bg-white/30 rounded-full px-4 py-2 w-fit transition-colors"> 
+                                        className="text-sm text-white bg-white/20 hover:bg-brand-pink/80 dark:hover:bg-brand-orange/80 hover:text-white rounded-full px-4 py-2 w-fit transition-colors"> 
                                         {analyzeLoading ? "Analyzing..." : "Analyze"}
                                     </button> 
                                 </div> 
