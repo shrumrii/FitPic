@@ -1,40 +1,26 @@
 "use client";
-import Navbar from "@/components/navbar"
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { getUser } from "@/lib/getUser";
 import { loggedFetch } from "@/lib/api";
 import Sidebar from "@/components/sidebar";
+import { useUser } from "@/context/userContext";
 
 
 export default function Friend() {
 
-    const router = useRouter();
-    const [loading, setLoading] = useState(false); 
+    const { user_id, loading } = useUser() ?? { user_id: "", loading: false };
+    const [searchLoading, setSearchLoading] = useState(false);
     const [usernameSearchString, setUsernameSearchString] = useState("");
     const [usernameList, setUsernameList] = useState<{user_id: string, username: string | null}[]>([]);
     const [searching, setSearching] = useState(false);
-    const [userID, setUserID] = useState("");
-    const [adding, setAdding] = useState(false);
-    const [popupMessage, setPopupMessage] = useState("");
     const [followedList, setFollowedList] = useState<string[]>([]);
 
     useEffect(() => {
         const populateFriendPage = async () => {
+            if (loading) return;
+            if (user_id == "") return;
 
             try {
-
-                const user = await getUser();
-
-                if (user == null) {
-                    console.log("Redirect to welcome page");
-                    router.push("/welcome");
-                    return;
-                }
-
-                setUserID(user.id);
-
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}/following`, undefined, user.id);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/following`, undefined, user_id);
 
                 if (!response.ok) {
                     console.log(await response.text())
@@ -42,23 +28,20 @@ export default function Friend() {
                 }
 
                 const result = await response.json();
-
-                //map followedList to just be a list of following ids
                 setFollowedList(result.data.map((item: {following_id: string}) => item.following_id));
 
             } catch (error) {
                 console.error(error);
-            } 
+            }
         }
         populateFriendPage();
-    }, [])
+    }, [loading, user_id])
 
-    //when user clicks
     const handleSearch = async () => {
 
         try {
-            setLoading(true); 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search?username=${usernameSearchString}`, undefined, userID);
+            setSearchLoading(true);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/search?username=${usernameSearchString}`, undefined, user_id);
 
             if (!response.ok) {
                 console.log(await response.text())
@@ -67,26 +50,23 @@ export default function Friend() {
 
             const result = await response.json();
             setUsernameList(result.data);
-
             setSearching(true);
 
         } catch (error) {
             console.error(error);
         } finally {
-            setLoading(false);
+            setSearchLoading(false);
         }
     }
 
     const addFriend = async (followingID: string) => {
-        setAdding(true);
 
         try {
-
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/follow`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/follow`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ following_id: followingID })
-            }, userID);
+            }, user_id);
 
             if (!response.ok) {
                 console.log(await response.text())
@@ -95,12 +75,10 @@ export default function Friend() {
 
             const result = await response.json();
 
-            //if log into database not successful, send popup msg
             if (!result.success) {
                 console.log("Add friend not successful");
             } else {
                 console.log(`${result.data.following_id} successfully added`);
-                //add to the followedList state if clicked (and doesnt exist in state already)
                 if (!followedList.includes(result.data.following_id)) {
                     setFollowedList([...followedList, result.data.following_id])
                 }
@@ -108,17 +86,15 @@ export default function Friend() {
 
         } catch (error) {
             console.error(error);
-        } finally {
-            setAdding(false);
         }
     }
 
     const removeFriend = async (followingID: string) => {
 
-        try { 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${userID}/unfollow/${followingID}`, {
+        try {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/unfollow/${followingID}`, {
                 method: "DELETE"
-            }, userID);
+            }, user_id);
 
             if (!response.ok) {
                 console.log(await response.text());
@@ -127,18 +103,18 @@ export default function Friend() {
 
             const result = await response.json();
 
-            if (!result.success) { 
+            if (!result.success) {
                 console.log("Remove friend not successful");
-                return; 
-            } 
+                return;
+            }
 
             console.log(`${followingID} successfully removed`);
-            setFollowedList(followedList.filter(id => id !== followingID)); //remove from followedList state
+            setFollowedList(followedList.filter(id => id !== followingID));
 
-        } catch (error) { 
+        } catch (error) {
             console.error(error);
         }
-    } 
+    }
 
     return (
         <div className="flex min-h-screen bg-white dark:bg-black">
@@ -163,9 +139,9 @@ export default function Friend() {
                     <button
                         className="bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 enabled:hover:bg-brand-pink dark:enabled:hover:bg-brand-orange enabled:hover:text-white transition-colors dark:bg-white dark:text-black disabled:opacity-50 whitespace-nowrap"
                         onClick={handleSearch}
-                        disabled={!usernameSearchString || loading}
+                        disabled={!usernameSearchString || searchLoading}
                     >
-                        {loading ? "Searching..." : "Search"}
+                        {searchLoading ? "Searching..." : "Search"}
                     </button>
                 </div>
 

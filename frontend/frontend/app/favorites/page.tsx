@@ -20,8 +20,8 @@ export default function Favorites() {
 
     useEffect(() => {
         const getFavorites = async () => {
-
-            if (user_id == "") return; 
+            if (loading) return;
+            if (user_id == "") return;
 
             try { 
                 setLoadingFavorites(true); 

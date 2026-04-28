@@ -39,6 +39,7 @@ export default function Profile() {
     useEffect(() => {
 
         const getProfileInfo = async () => {
+            if (loading) return;
             if (!target_user_id) return;
 
             try {

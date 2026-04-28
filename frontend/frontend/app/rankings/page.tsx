@@ -19,8 +19,8 @@ export default function Rankings() {
     const [selectedImage, setSelectedImage] = useState<{image_id: string, rank: Number, url: string} | null>(null);
 
     useEffect(() => {
-        const getRankings = async () => { 
-
+        const getRankings = async () => {
+            if (loading) return;
             if (user_id == "") return;
 
             try { 

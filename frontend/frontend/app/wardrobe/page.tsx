@@ -41,8 +41,9 @@ export default function Wardrobe() {
 
     useEffect(() => { 
 
-        const fetchWardrobe = async () => { 
-            if (!user_id) return; 
+        const fetchWardrobe = async () => {
+            if (loading) return;
+            if (user_id == "") { setFetched(true); return; }
             try { 
                 await Promise.all([handleRecentImages(), getImageCount(), getStyleStats(), getColorStats()]); 
             } catch (error) { 

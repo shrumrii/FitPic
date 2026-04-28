@@ -1,11 +1,12 @@
 import logging 
+import logging.handlers 
 
 logging.basicConfig(
     level=logging.ERROR, 
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
     handlers=[
         logging.StreamHandler(), 
-        logging.FileHandler("logs/error.log")
+        logging.handlers.TimedRotatingFileHandler("logs/error.log", when="W0", interval=1, backupCount=2)
     ]
 )
 
@@ -17,7 +18,7 @@ logging.getLogger("uvicorn.access").setLevel(logging.ERROR)
 request_logger = logging.getLogger("requests")                                                                                             
 request_logger.setLevel(logging.INFO)                                                                                                      
 request_logger.propagate = False  
-handler = logging.FileHandler("logs/request.log")                                                                                          
+handler = logging.handlers.TimedRotatingFileHandler("logs/request.log", when="W0", interval=1, backupCount=2)                                                                                          
 handler.setFormatter(logging.Formatter('%(asctime)s - %(message)s'))
 request_logger.addHandler(handler)  
 
@@ -25,7 +26,7 @@ request_logger.addHandler(handler)
 frontend_logger = logging.getLogger("frontend")
 frontend_logger.setLevel(logging.ERROR)  
 frontend_logger.propagate = False 
-handler = logging.FileHandler("logs/frontend_error.log")
+handler = logging.handlers.TimedRotatingFileHandler("logs/frontend_error.log", when="W0", interval=1, backupCount=2)
 handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
 frontend_logger.addHandler(handler) 
 

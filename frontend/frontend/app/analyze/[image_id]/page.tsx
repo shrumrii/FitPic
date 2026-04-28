@@ -17,7 +17,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [redoResult, setRedoResult] = useState<{ analysis: string; tags: { color: string[]; style: string[]; season: string } } | null>(null);
+    const [redoResult, setRedoResult] = useState<{ analysis: string; tags: string[] } | null>(null);
     const router = useRouter();
 
     const displayAnalysis = redoResult?.analysis || analysis;
@@ -30,16 +30,17 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     useEffect(() => { 
         //run analyze as fallback once on mount 
         if (!analysis) { 
-            analyze(false); 
+            analyze(); 
         }
     }, [])
 
     //refresh param is true if user is clicking "get another take" button, false if it's the initial analyze on page load
-    const analyze = async (refresh: boolean) => {
+    const analyze = async (refresh = false) => {
         setError("");
         try {
             setLoading(true);
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze?refresh=${refresh}`, undefined, user_id);
+            
             if (!response.ok) throw new Error("Could not analyze image.");
             const result = await response.json();
             if (!result.success) {
@@ -47,6 +48,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 return;
             }
             setRedoResult({ analysis: result.analysis, tags: result.tags });
+
         } catch (err) {
             console.error(err);
             setError("Something went wrong. Try again.");
@@ -61,7 +63,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             setSaveLoading(true);
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/save-to-wardrobe`, {
                 method: "POST", 
-                body: JSON.stringify({ color: displayTags.color, style: displayTags.style, season: displayTags.season }),
+                body: JSON.stringify({ tags: displayTags, analysis: displayAnalysis }),
                 headers: { "Content-Type": "application/json" }
 
             }, user_id)
@@ -121,7 +123,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                         </div>
 
                         <button
-                            onClick={() => analyze(displayAnalysis ? true : false)}
+                            onClick={() => displayAnalysis ? analyze(true) : analyze()}
                             disabled={loading}
                             className="mt-3 w-full py-3 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-85 transition-opacity disabled:opacity-50"
                         >
@@ -152,12 +154,12 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                     <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
                                         <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-3">Tags</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {Object.entries(displayTags).map(([key, value]) => (
+                                            {displayTags.map((tag: string, i: number) => (
                                                 <span
-                                                    key={key}
+                                                    key={`${tag}-${i}`}
                                                     className="text-xs px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
                                                 >
-                                                    {String(value)}
+                                                    {tag}
                                                 </span>
                                             ))}
                                         </div>
@@ -165,7 +167,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                 )}
 
                                 <button 
-                                    className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
                                     onClick={() => saved ? router.push("/wardrobe") : handleSaveToWardrobe()}
                                     disabled={saveLoading || !displayAnalysis} 
                                 >
