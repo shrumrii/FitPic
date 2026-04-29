@@ -35,7 +35,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
         contents = img_io.read()
 
         #validate img
-        response = gemini_client.models.generate_content(
+        response = await gemini_client.models.generate_content_async(
             model="gemini-3-flash-preview",
             config=VALIDATE_CONFIG,
             contents=[
@@ -91,10 +91,10 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
             "message": "Failed to upload image."
         }
 
-def call_gemini(image_bytes, max_tokens):
+async def call_gemini(image_bytes, max_tokens):
 
     config_type = ANALYZE_CONFIG if max_tokens == 800 else HIGHER_ANALYZE_CONFIG
-    response = gemini_client.models.generate_content(
+    response = await gemini_client.models.generate_content_async(
         model="gemini-3-flash-preview",
         config=config_type,
         contents=[
@@ -164,7 +164,7 @@ async def analyze_image(image_id: str, refresh: bool = False):
             response = await http_client.get(image_url)
             image_bytes = response.content
 
-        analysis, ai_tags = call_gemini(image_bytes, max_tokens=800)
+        analysis, ai_tags = await call_gemini(image_bytes, max_tokens=800)
         matched_tags = await match_tags(ai_tags.get("color"), ai_tags.get("style"), ai_tags.get("season"))
 
         return {
