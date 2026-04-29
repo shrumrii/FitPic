@@ -1,14 +1,15 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends, HTTPException
 from database import get_supabase
 from pydantic import BaseModel
 from logger import get_logger
+from auth import get_current_user
 
 router = APIRouter()
 logger = get_logger(__name__)
 
 #get user's favorited images
 @router.get("/favorites")
-async def get_favorites(user_id: str):
+async def get_favorites(user_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("favorites").select("user_id, images!favorites_image_id_fkey(image_id, url, created_at, users!images_user_id_fkey(username))").eq("user_id", user_id).order("created_at", desc=True).execute()
@@ -31,7 +32,10 @@ class Favorite(BaseModel):
 
 #favorite an image
 @router.post("/favorites")
-async def add_favorite(favorite: Favorite):
+async def add_favorite(favorite: Favorite, current_user: str = Depends(get_current_user)):
+
+    if current_user != favorite.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     data = {
         "user_id": favorite.user_id,
@@ -62,7 +66,10 @@ async def add_favorite(favorite: Favorite):
 
 #unfavorite an image
 @router.delete("/favorites")
-async def delete_favorite(favorite: Favorite):
+async def delete_favorite(favorite: Favorite, current_user: str = Depends(get_current_user)):
+
+    if current_user != favorite.user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
         response = await get_supabase().table("favorites").delete().eq("user_id", favorite.user_id).eq("image_id", favorite.image_id).execute()

@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
 from PIL import Image
 import io
 from database import get_supabase
@@ -14,6 +14,7 @@ from gemini.model_config import ANALYZE_CONFIG, HIGHER_ANALYZE_CONFIG, VALIDATE_
 from datetime import datetime, timezone
 
 from logger import get_logger
+from auth import get_current_user
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -21,7 +22,10 @@ gemini_client = genai.Client()
 
 #upload image
 @router.post("/images/upload")
-async def upload_image(image: UploadFile = File(...), user_id: str = Form(...)):
+async def upload_image(image: UploadFile = File(...), user_id: str = Form(...), current_user: str = Depends(get_current_user)):
+
+    if current_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
         contents = await image.read()
@@ -142,7 +146,7 @@ async def match_tags(color, style, season) -> list[str]:
 
 #analyze image
 @router.get("/images/{image_id}/analyze")
-async def analyze_image(image_id: str, refresh: bool = False):
+async def analyze_image(image_id: str, refresh: bool = False, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("images").select("url, analysis, analyzed_at").eq("image_id", image_id).execute()
@@ -176,7 +180,7 @@ async def analyze_image(image_id: str, refresh: bool = False):
     except json.JSONDecodeError as e:
         logger.error(f"{image_id} ran into JSON Decode Error. Most likely due to malformed JSON from not enough tokens: {e}")
         try:
-            analysis, ai_tags = call_gemini(image_bytes, max_tokens=1200)
+            analysis, ai_tags = await call_gemini(image_bytes, max_tokens=1200)
             matched_tags = await match_tags(ai_tags.get("color"), ai_tags.get("style"), ai_tags.get("season"))
 
             return {
@@ -203,7 +207,7 @@ class TagRequest(BaseModel):
 
 #add tags to image
 @router.post("/images/{image_id}/tag")
-async def add_tags(image_id: str, request: TagRequest):
+async def add_tags(image_id: str, request: TagRequest, current_user: str = Depends(get_current_user)):
 
     try:
         tag_query = await get_supabase().table("tags").select("*").eq("name", request.tag_name).execute()
@@ -235,7 +239,7 @@ async def add_tags(image_id: str, request: TagRequest):
 
 #get tags for specific image
 @router.get("/images/{image_id}/tags")
-async def get_tags(image_id: str):
+async def get_tags(image_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
@@ -262,7 +266,7 @@ class TagsUpdateRequest(BaseModel):
 
 #delete tags
 @router.delete("/images/{image_id}/tags")
-async def delete_tags(image_id: str, requests: TagsUpdateRequest):
+async def delete_tags(image_id: str, requests: TagsUpdateRequest, current_user: str = Depends(get_current_user)):
 
     try:
         tag_names = requests.tag_names
@@ -294,7 +298,7 @@ class saveToWardrobeRequest(BaseModel):
 
 
 @router.post("/images/{image_id}/save-to-wardrobe")
-async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest):
+async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest, current_user: str = Depends(get_current_user)):
 
     try:
         if request.tags:

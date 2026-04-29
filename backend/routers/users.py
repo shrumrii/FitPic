@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File
+from fastapi import APIRouter, UploadFile, File, Depends, HTTPException
 from PIL import Image
 import io
 from database import get_supabase
@@ -6,6 +6,8 @@ from pydantic import BaseModel
 import uuid
 from logger import get_logger
 import asyncio
+from concurrent.futures import ThreadPoolExecutor
+from auth import get_current_user
 
 
 router = APIRouter()
@@ -19,7 +21,11 @@ class UserCreate(BaseModel):
 
 #create user, match supabase auth user creation
 @router.post("/users/create")
-async def create_user(user: UserCreate):
+async def create_user(user: UserCreate, current_user: str = Depends(get_current_user)):
+
+    if current_user != user.id:
+        raise HTTPException(status_code=403, detail="Forbidden")
+
     data = {
         "user_id": user.id,
         "email": user.email,
@@ -42,7 +48,7 @@ async def create_user(user: UserCreate):
 
 #search for username - used for friend search feature
 @router.get("/users/search")
-async def search_username(username: str):
+async def search_username(username: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("users").select("user_id, username").ilike("username", f"%{username}%").execute()
@@ -62,7 +68,7 @@ async def search_username(username: str):
 
 #get user by id, used widely across app
 @router.get("/users/{user_id}")
-async def get_user(user_id: str):
+async def get_user(user_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         response = await get_supabase().table("users").select("*").eq("user_id", user_id).execute()
@@ -87,7 +93,7 @@ async def get_user(user_id: str):
 
 #get all images from specific user
 @router.get("/users/{user_id}/images")
-async def get_images(user_id: str, include_likes: bool = False, limit: int = 50):
+async def get_images(user_id: str, include_likes: bool = False, limit: int = 50, current_user: str = Depends(get_current_user)):
 
     if include_likes:
         select = "image_id, created_at, url, favorites!favorites_image_id_fkey(count)"
@@ -110,7 +116,10 @@ async def get_images(user_id: str, include_likes: bool = False, limit: int = 50)
 
 #change user's pfp (profile page)
 @router.post("/users/{user_id}/pfp")
-async def upload_pfp(user_id: str, image: UploadFile = File(...)):
+async def upload_pfp(user_id: str, image: UploadFile = File(...), current_user: str = Depends(get_current_user)):
+
+    if current_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     if image.content_type != "image/jpeg" and image.content_type != "image/png":
         return {
@@ -171,7 +180,10 @@ class AddFollower(BaseModel):
 
 #follow another user
 @router.post("/users/{follower_id}/follow")
-async def add_follower(follower_id: str, following: AddFollower):
+async def add_follower(follower_id: str, following: AddFollower, current_user: str = Depends(get_current_user)):
+
+    if current_user != follower_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     data = {
         "follower_id": follower_id,
@@ -201,7 +213,10 @@ async def add_follower(follower_id: str, following: AddFollower):
 
 #unfollow user
 @router.delete("/users/{follower_id}/unfollow/{following_id}")
-async def remove_follower(follower_id: str, following_id: str):
+async def remove_follower(follower_id: str, following_id: str, current_user: str = Depends(get_current_user)):
+
+    if current_user != follower_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
         await get_supabase().table("follows").delete().eq("follower_id", follower_id).eq("following_id", following_id).execute()
@@ -219,7 +234,7 @@ async def remove_follower(follower_id: str, following_id: str):
 
 #get list of following
 @router.get("/users/{user_id}/following")
-async def get_following(user_id: str):
+async def get_following(user_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("follows").select("following_id, users!follows_following_id_fkey(username)").eq("follower_id", user_id).execute()
@@ -238,7 +253,7 @@ async def get_following(user_id: str):
 
 #get list of followers
 @router.get("/users/{user_id}/followers")
-async def get_followers(user_id: str):
+async def get_followers(user_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("follows").select("follower_id, users!follows_follower_id_fkey(username)").eq("following_id", user_id).execute()
@@ -257,7 +272,10 @@ async def get_followers(user_id: str):
 
 #get user feed
 @router.get("/users/{user_id}/feed")
-async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent", limit: int = 50):
+async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent", limit: int = 50, current_user: str = Depends(get_current_user)):
+
+    if current_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     feed_list = []
     try:
@@ -298,7 +316,10 @@ async def get_feed(user_id: str, include_likes: bool = True, mode: str = "recent
 
 #delete user's image
 @router.delete("/users/{user_id}/images/{image_id}")
-async def delete_image(user_id: str, image_id: str):
+async def delete_image(user_id: str, image_id: str, current_user: str = Depends(get_current_user)):
+
+    if current_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
         query = await get_supabase().table("images").select("image_id, file_name").eq("image_id", image_id).eq("user_id", user_id).execute()
@@ -310,7 +331,6 @@ async def delete_image(user_id: str, image_id: str):
 
         file_name = query.data[0]["file_name"]
 
-        #delete from s3 and supabase db concurrently 
         await asyncio.gather(
             get_supabase().storage.from_("images").remove([file_name]),
             get_supabase().table("images").delete().eq("image_id", image_id).execute()
@@ -329,7 +349,7 @@ async def delete_image(user_id: str, image_id: str):
 
 #load existing rankings page
 @router.get("/users/{user_id}/rankings")
-async def get_rankings(user_id: str):
+async def get_rankings(user_id: str, current_user: str = Depends(get_current_user)):
     try:
         query = await get_supabase().table("rankings").select("*, images(url)").eq("user_id", user_id).order("rank", desc=True).execute()
         rankings = query.data
@@ -354,7 +374,10 @@ class RankingList(BaseModel):
 
 #save new rankings
 @router.put("/users/{user_id}/rankings")
-async def save_rankings(user_id: str, rankings: RankingList):
+async def save_rankings(user_id: str, rankings: RankingList, current_user: str = Depends(get_current_user)):
+
+    if current_user != user_id:
+        raise HTTPException(status_code=403, detail="Forbidden")
 
     try:
         await get_supabase().table("rankings").delete().eq("user_id", user_id).execute()
@@ -383,7 +406,7 @@ async def save_rankings(user_id: str, rankings: RankingList):
 
 #get all user images that have been analyzed
 @router.get("/users/{user_id}/analyzed-images")
-async def get_analyzed_images(user_id: str):
+async def get_analyzed_images(user_id: str, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("images").select("image_id, url, analyzed_at").eq("user_id", user_id).not_.is_("analyzed_at", "null").limit(10).order("analyzed_at", desc=True).execute()

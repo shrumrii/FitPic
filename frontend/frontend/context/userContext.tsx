@@ -2,6 +2,8 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { getUser } from "@/lib/getUser";
 import supabase from "@/lib/supabase";
+import { loggedFetch } from "@/lib/api";
+
 
 type UserContextType = { 
     username: string 
@@ -28,11 +30,11 @@ export function UserProvider({ children }: { children: React.ReactNode }) {
     const fetchInfo = async () => { 
         setLoading(true); 
         try { 
-
-            const user = await getUser(); 
-            if (user == null) return; 
+            const { data: { session } } = await supabase.auth.getSession();                                                                            
+            if (!session) return;                                                                                                                      
+            const user = session.user;
             
-            const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`); 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user.id}`, undefined, user.id); 
 
             if (!response.ok) { 
                 console.log(await response.text()); 
