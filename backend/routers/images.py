@@ -23,7 +23,8 @@ gemini_client = genai.Client()
 
 #upload image
 @router.post("/images/upload")
-async def upload_image(image: UploadFile = File(...), user_id: str = Form(...), current_user: str = Depends(get_current_user)):
+@limiter.limit("2/minute")
+async def upload_image(request: Request, image: UploadFile = File(...), user_id: str = Form(...), current_user: str = Depends(get_current_user)):
 
     if current_user != user_id:
         raise HTTPException(status_code=403, detail="Forbidden")

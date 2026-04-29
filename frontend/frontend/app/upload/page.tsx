@@ -49,6 +49,12 @@ export default function UploadPage() {
                 body: formData
             }, user_id);
 
+            if (response.status === 429) { 
+                setError("Too many requests. Please try again later."); 
+                return; 
+            }
+            
+
             if (!response.ok) {
                 console.log(await response.text());
                 throw new Error("Upload failed");
@@ -75,6 +81,11 @@ export default function UploadPage() {
         try { 
             setAnalyzeLoading(true); 
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id); 
+
+            if (response.status === 429) { 
+                setError("Too many requests. Please try again later."); 
+                return; 
+            }
 
             if (!response.ok) { 
                 console.error("Could not analyze image.")
