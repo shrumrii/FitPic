@@ -30,7 +30,6 @@ export async function loggedFetch(url: string, options?: RequestInit, user_id?: 
         if (!response.ok) { 
             const error = new Error(`HTTP ${response.status}`)                                                                                     
             logError(error, user_id)                                                                                                               
-            throw error
         }
         return response;
 

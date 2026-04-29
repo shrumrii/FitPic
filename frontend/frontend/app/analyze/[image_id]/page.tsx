@@ -41,6 +41,13 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             setLoading(true);
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze?refresh=${refresh}`, undefined, user_id);
             
+            //handle too many requests status code  
+            console.log(response.status)
+            if (response.status === 429) { 
+                setError("Too many requests. Please try again later."); 
+                return; 
+            } 
+
             if (!response.ok) throw new Error("Could not analyze image.");
             const result = await response.json();
             if (!result.success) {
@@ -52,6 +59,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
         } catch (err) {
             console.error(err);
             setError("Something went wrong. Try again.");
+            
         } finally {
             setLoading(false);
         }
@@ -83,9 +91,8 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             //save successful 
             setSaved(true); 
             
-            
-
         } catch (error) { 
+            
             console.error("Could not save to wardrobe.", error);
             setSaveError("Could not save to wardrobe. Try again.");
         } finally { 

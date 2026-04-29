@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException
+from fastapi import APIRouter, UploadFile, File, Form, Depends, HTTPException, Request 
 from PIL import Image
 import io
 from database import get_supabase
@@ -15,6 +15,7 @@ from datetime import datetime, timezone
 
 from logger import get_logger
 from auth import get_current_user
+from limiter import limiter
 
 router = APIRouter()
 logger = get_logger(__name__)
@@ -39,7 +40,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...), 
         contents = img_io.read()
 
         #validate img
-        response = await gemini_client.models.generate_content_async(
+        response = await gemini_client.aio.models.generate_content(
             model="gemini-3-flash-preview",
             config=VALIDATE_CONFIG,
             contents=[
@@ -98,7 +99,7 @@ async def upload_image(image: UploadFile = File(...), user_id: str = Form(...), 
 async def call_gemini(image_bytes, max_tokens):
 
     config_type = ANALYZE_CONFIG if max_tokens == 800 else HIGHER_ANALYZE_CONFIG
-    response = await gemini_client.models.generate_content_async(
+    response = await gemini_client.aio.models.generate_content(
         model="gemini-3-flash-preview",
         config=config_type,
         contents=[
@@ -146,7 +147,8 @@ async def match_tags(color, style, season) -> list[str]:
 
 #analyze image
 @router.get("/images/{image_id}/analyze")
-async def analyze_image(image_id: str, refresh: bool = False, current_user: str = Depends(get_current_user)):
+@limiter.limit("5/minute")
+async def analyze_image(request: Request, image_id: str, refresh: bool = False, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("images").select("url, analysis, analyzed_at").eq("image_id", image_id).execute()
