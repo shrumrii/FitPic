@@ -15,58 +15,83 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const analysis = decodeURIComponent(searchParams.get("analysis") ?? "") || undefined;
     const tagsParam = searchParams.get("tags");
     const initialTags = tagsParam ? JSON.parse(decodeURIComponent(tagsParam)) : null;
+    const [activeTab, setActiveTab] = useState<"ai" | "journal">("ai");
 
     const [loading, setLoading] = useState(false);
+    const [journalLoading, setJournalLoading] = useState(false); 
     const [error, setError] = useState("");
     const [imageLoaded, setImageLoaded] = useState(false);
     const [redoAnalysis, setRedoAnalysis] = useState<{ analysis: string } | null>(null);
     const router = useRouter();
 
-    const [aiTags, setAiTags] = useState<string[]>(initialTags ?? []); 
+    const [aiTags, setAiTags] = useState<string[]>(initialTags ?? []); //ai tags are ephemeral  
     const [userTags, setUserTags] = useState<string[]>([]); 
     const displayAnalysis = redoAnalysis?.analysis || analysis;
     const displayTags = [...aiTags, ...userTags]; 
 
+    const [notes, setNotes] = useState(""); 
+    const [description, setDescription] = useState(""); 
+    const [rating, setRating] = useState<number | null>(null);
+
     const [saveLoading, setSaveLoading] = useState(false); 
     const [saveError, setSaveError] = useState("");
-    const [saved, setSaved] = useState(false);
 
-    useEffect(() => { 
-        //run analyze as fallback once on mount 
-        if (!analysis) { 
-            analyze(); 
-        }
+    useEffect(() => {   
+        //fetch previously saved journal info on mount                                                                                                   
+        getJournalInfo();   
     }, [])
 
-    //refresh param is true if user is clicking "get another take" button, false if it's the initial analyze on page load
-    const analyze = async (refresh = false) => {
+    //return previous journal/analysis information 
+    const getJournalInfo = async () => { 
+
+        try { 
+            setJournalLoading(true); 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/journal`, undefined, user_id); 
+            if (!response.ok) throw new Error("Could not analyze image.");
+            const result = await response.json(); 
+            if (!result.success) {
+                console.error("error");
+                return;  
+            }
+
+            setUserTags(result.data.tags); 
+            setNotes(result.data.notes); 
+            setDescription(result.data.description); 
+            setRating(result.data.rating); 
+            if (result.data.analysis) setRedoAnalysis({ analysis: result.data.analysis });
+
+        } catch (error) { 
+            console.error(error); 
+        } finally { 
+            setJournalLoading(false); 
+        }
+
+    }
+
+    const analyze = async () => {
         setError("");
         try {
             setLoading(true);
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze?refresh=${refresh}`, undefined, user_id);
-            
-            //handle too many requests status code  
-            console.log(response.status)
-            if (response.status === 429) { 
-                setError("Too many requests. Please try again later."); 
-                return; 
-            } 
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/analyze`, undefined, user_id);
+
+            if (response.status === 429) {
+                setError("Too many requests. Please try again later.");
+                return;
+            }
             if (!response.ok) throw new Error("Could not analyze image.");
 
             const result = await response.json();
-
             if (!result.success) {
                 setError(result.message);
                 return;
             }
-            //set ai tags and analysis 
-            setAiTags(result.tags); 
+
+            setAiTags(result.tags);
             setRedoAnalysis({ analysis: result.analysis });
 
         } catch (err) {
             console.error(err);
             setError("Something went wrong. Try again.");
-            
         } finally {
             setLoading(false);
         }
@@ -78,7 +103,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             setSaveLoading(true);
             const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/save-to-wardrobe`, {
                 method: "POST", 
-                body: JSON.stringify({ tags: displayTags, analysis: displayAnalysis }),
+                body: JSON.stringify({ tags: userTags, analysis: displayAnalysis }),
                 headers: { "Content-Type": "application/json" }
 
             }, user_id)
@@ -95,8 +120,8 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 return; 
             }
             
-            //save successful 
-            setSaved(true); 
+            //save successful, push to wardrobe 
+            router.push("/wardrobe")
             
         } catch (error) { 
             
@@ -111,6 +136,37 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const onTagMove = (tag: string) => { 
         if (!userTags.includes(tag)) { 
             setUserTags(prev => [...prev, tag]); 
+        }
+    }
+
+    const handleSaveJournal = async () => {
+        try {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/journal`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notes, description, rating })
+            }, user_id);
+            if (!response.ok) throw new Error("Could not save journal.");
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    const handleRating = async (star: number) => {
+        setRating(star);
+        try {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}/journal`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ notes, description, rating: star })
+            }, user_id);
+            if (!response.ok) throw new Error("Could not save rating.");
+            const result = await response.json();
+            if (!result.success) throw new Error(result.message);
+        } catch (error) {
+            console.error(error);
         }
     }
 
@@ -144,7 +200,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                         </div>
 
                         <button
-                            onClick={() => displayAnalysis ? analyze(true) : analyze()}
+                            onClick={analyze}
                             disabled={loading}
                             className="mt-3 w-full py-3 text-sm font-medium bg-black dark:bg-white text-white dark:text-black rounded-lg hover:opacity-85 transition-opacity disabled:opacity-50"
                         >
@@ -158,49 +214,114 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
 
                     {/* right: results */}
                     <div className="flex flex-col gap-3">
-                        {loading ? (
-                            <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-10 text-center">
-                                <p className="text-sm text-zinc-400">Analyzing your outfit...</p>
-                            </div>
-                        ) : displayAnalysis || displayTags ? (
+
+                        {/* tab switcher */}
+                        <div className="flex gap-1 bg-zinc-100 dark:bg-zinc-800 rounded-xl p-1">
+                            <button
+                                onClick={() => setActiveTab("ai")}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${activeTab === "ai" ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"}`}
+                            >
+                                AI Analysis
+                            </button>
+                            <button
+                                onClick={() => setActiveTab("journal")}
+                                className={`flex-1 py-2 text-xs font-medium rounded-lg transition-colors ${activeTab === "journal" ? "bg-white dark:bg-zinc-700 text-black dark:text-white shadow-sm" : "text-zinc-400 hover:text-zinc-600 dark:hover:text-zinc-300"}`}
+                            >
+                                My Journal
+                            </button>
+                        </div>
+
+                        {/* AI Analysis tab */}
+                        {activeTab === "ai" && (
                             <>
-                                {displayAnalysis && (
-                                    <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
-                                        <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-2.5">Style tip</p>
-                                        <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{displayAnalysis}</p>
+                                {loading ? (
+                                    <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-10 text-center">
+                                        <p className="text-sm text-zinc-400">Analyzing your outfit...</p>
+                                    </div>
+                                ) : displayAnalysis || displayTags.length > 0 ? (
+                                    <>
+                                        {displayAnalysis && (
+                                            <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
+                                                <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-2.5">Style tip</p>
+                                                <p className="text-sm text-zinc-700 dark:text-zinc-300 leading-relaxed">{displayAnalysis}</p>
+                                            </div>
+                                        )}
+
+                                        <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
+                                            <DragDropProvider onDragEnd={(e) => {
+                                                if (e.operation.source) {
+                                                    onTagMove(e.operation.source.id as string);
+                                                }
+                                            }}>
+                                                <DragObject aiTags={aiTags} userTags={userTags} onClearTags={() => setUserTags([])} />
+                                            </DragDropProvider>
+                                        </div>
+
+                                        <button
+                                            className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
+                                            onClick={handleSaveToWardrobe}
+                                            disabled={saveLoading || !displayAnalysis}
+                                        >
+                                            {saveLoading ? "Saving to wardrobe..." : "Save to wardrobe"}
+                                            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
+                                                <path d="M3 8h10M9 4l4 4-4 4"/>
+                                            </svg>
+                                        </button>
+
+                                        {saveError && (
+                                            <p className="mt-2 text-xs text-red-500 text-center">{saveError}</p>
+                                        )}
+                                    </>
+                                ) : (
+                                    <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-10 text-center">
+                                        <p className="text-sm text-zinc-400">Run an analysis to see your style breakdown.</p>
                                     </div>
                                 )}
-
-                                <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
-                                    <DragDropProvider onDragEnd={(e) => {
-                                        if (e.operation.source) {
-                                            onTagMove(e.operation.source.id as string);
-                                        }
-                                    }}>
-                                        <DragObject aiTags={aiTags} userTags={userTags} />
-                                    </DragDropProvider>
-                                </div>
-
-                                <button 
-                                    className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
-                                    onClick={() => saved ? router.push("/wardrobe") : handleSaveToWardrobe()}
-                                    disabled={saveLoading || !displayAnalysis} 
-                                >
-                                    {saveLoading ? "Saving to wardrobe..." : saved ? "Saved to wardrobe! Go to wardrobe?" : "Save to wardrobe"}
-                                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round">
-                                        <path d="M3 8h10M9 4l4 4-4 4"/>
-                                    </svg>
-                                </button> 
-
-                                {saveError && (
-                                    <p className="mt-2 text-xs text-red-500 text-center">{saveError}</p>
-                                )}
                             </>
-                        ) : (
-                            <div className="border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-10 text-center">
-                                <p className="text-sm text-zinc-400">Run an analysis to see your style breakdown.</p>
+                        )}
+
+                        {/* My Journal tab */}
+                        {activeTab === "journal" && (
+                            <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5 flex flex-col gap-4">
+                                <div>
+                                    <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-2">Description</p>
+                                    <input
+                                        value={description}
+                                        onChange={(e) => setDescription(e.target.value)}   
+                                        onBlur={handleSaveJournal}
+                                        type="text"
+                                        placeholder="Maison Margiela Gats, Lemaire shirt..."
+                                        className="w-full text-sm bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-zinc-400"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-2">Notes</p>
+                                    <textarea
+                                        value={notes}
+                                        onChange={(e) => setNotes(e.target.value)}
+                                        onBlur={handleSaveJournal}
+                                        placeholder="How did this fit feel? Where did you wear it?"
+                                        rows={4}
+                                        className="w-full text-sm bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-zinc-400 resize-none"
+                                    />
+                                </div>
+                                <div>
+                                    <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-2">Rating</p>
+                                    <div className="flex gap-1">
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <button
+                                                key={star}
+                                                onClick={() => handleRating(star)}
+                                                className={`text-2xl transition-colors hover:text-amber-400 ${rating && star <= rating ? "text-amber-400" : "text-zinc-300 dark:text-zinc-600"}`}
+                                            >
+                                                ★
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
                         )}
+
                     </div>
 
                 </div>

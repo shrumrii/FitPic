@@ -150,23 +150,10 @@ async def match_tags(color, style, season) -> list[str]:
 #analyze image
 @router.get("/images/{image_id}/analyze")
 @limiter.limit("5/minute")
-async def analyze_image(request: Request, image_id: UUID, refresh: bool = False, current_user: str = Depends(get_current_user)):
+async def analyze_image(request: Request, image_id: UUID, current_user: str = Depends(get_current_user)):
 
     try:
-        query = await get_supabase().table("images").select("url, analysis, analyzed_at").eq("image_id", image_id).execute()
-
-        analyzed_before = query.data[0]["analysis"] or query.data[0]["analyzed_at"]
-
-        if analyzed_before and not refresh:
-            tags_query = await get_supabase().table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
-            tags = [x["tags"]["name"] for x in tags_query.data]
-            return {
-                "success": True,
-                "message": "Already analyzed before.",
-                "analysis": query.data[0]["analysis"],
-                "tags": tags
-            }
-
+        query = await get_supabase().table("images").select("url").eq("image_id", image_id).execute()
         image_url = query.data[0]["url"]
         async with httpx.AsyncClient() as http_client:
             response = await http_client.get(image_url)
@@ -253,7 +240,7 @@ async def get_tags(image_id: UUID, current_user: str = Depends(get_current_user)
                 "tags": []
             }
 
-        tags = [x["tags"] for x in query.data]
+        tags = [x["tags"]["name"] for x in query.data]
         return {
             "success": True,
             "tags": tags
@@ -305,11 +292,14 @@ class saveToWardrobeRequest(BaseModel):
 async def save_to_wardrobe(image_id: UUID, request: saveToWardrobeRequest, current_user: str = Depends(get_current_user)):
 
     try:
+        #delete then insert to guarantee user tags correctness 
+        await get_supabase().table("image_tags").delete().eq("image_id", str(image_id)).execute()    
+
         if request.tags:
             query = await get_supabase().table("tags").select("*").in_("name", request.tags).execute()
             if query.data:
-                rows_to_upsert = [{"image_id": image_id, "tag_id": x["tag_id"]} for x in query.data]
-                await get_supabase().table("image_tags").upsert(rows_to_upsert).execute()
+                rows_to_insert = [{"image_id": str(image_id), "tag_id": x["tag_id"]} for x in query.data]
+                await get_supabase().table("image_tags").insert(rows_to_insert).execute()
 
         await get_supabase().table("images").update({
             "analysis": request.analysis,
@@ -357,3 +347,59 @@ async def delete_image(image_id: UUID, current_user: str = Depends(get_current_u
             "success": False,
             "message": "Failed to delete image."
         }
+    
+class journalRequest(BaseModel):
+    notes: str | None = None
+    description: str | None = None
+    rating: int | None = None 
+@router.patch("/images/{image_id}/journal")
+async def add_notes(image_id: UUID, request: journalRequest, current_user: str = Depends(get_current_user)): 
+    
+    try: 
+        updates = request.model_dump(exclude_none=True) 
+        await get_supabase().table("images").update(updates).eq("image_id", str(image_id)).execute() 
+
+        return { 
+            "success": True, 
+            "message": "Successfully updated journal notes."
+        }
+
+    except Exception as e: 
+        logger.error(f"User {current_user} failed to update  {image_id}'s journal: {e}")
+        return {
+            "success": False,
+            "message": "Failed to update journal for this image."
+        }
+    
+#call endpoint to get previous analysis information to fetch on mount in analyze page 
+@router.get("/images/{image_id}/journal")
+async def get_journal_info(image_id: UUID, current_user: str = Depends(get_current_user)): 
+
+    try: 
+        query = await get_supabase().table("images").select("analysis, analyzed_at, notes, description, rating").eq("image_id", image_id).execute()
+        data = query.data[0]
+
+
+        #get tags 
+        tags_query = await get_supabase().table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
+        tags = [x["tags"]["name"] for x in tags_query.data]
+
+        return { 
+            "success": True, 
+            "data": { 
+                "analysis": data["analysis"],
+                "analyzed_at": data["analyzed_at"],
+                "notes": data["notes"],
+                "description": data["description"],
+                "rating": data["rating"], 
+                "tags": tags
+            }
+        }
+    except Exception as e: 
+        logger.error(f"Failed to retrieve analyze/journal data from {image_id}: {e}")
+        return {
+            "success": False, 
+            "message": "Failed to retrieve analyze/journal data."
+        }
+
+
