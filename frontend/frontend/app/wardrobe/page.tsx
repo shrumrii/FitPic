@@ -60,7 +60,7 @@ export default function Wardrobe() {
 
         try { 
             setRecentImagesLoading(true); 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/analyzed-images`, undefined, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/analyzed-images`, undefined, user_id);
         
             if (!response.ok) { 
                 console.log(await response.text());
@@ -122,7 +122,7 @@ export default function Wardrobe() {
 
         try { 
             setStyleStatsLoading(true);
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/style-stats`, undefined, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/style-stats`, undefined, user_id);
             
             if (!response.ok) { 
                 console.log(await response.text());
@@ -147,7 +147,7 @@ export default function Wardrobe() {
 
         try { 
             setColorStatsLoading(true);
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/color-stats`, undefined, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/color-stats`, undefined, user_id);
             if (!response.ok) { 
                 console.log(await response.text());
                 throw new Error("Could not fetch color stats.");

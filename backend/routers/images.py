@@ -7,6 +7,7 @@ import uuid
 import json
 import httpx
 import asyncio
+from uuid import UUID 
 
 from google import genai
 from google.genai import types
@@ -149,7 +150,7 @@ async def match_tags(color, style, season) -> list[str]:
 #analyze image
 @router.get("/images/{image_id}/analyze")
 @limiter.limit("5/minute")
-async def analyze_image(request: Request, image_id: str, refresh: bool = False, current_user: str = Depends(get_current_user)):
+async def analyze_image(request: Request, image_id: UUID, refresh: bool = False, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("images").select("url, analysis, analyzed_at").eq("image_id", image_id).execute()
@@ -210,7 +211,7 @@ class TagRequest(BaseModel):
 
 #add tags to image
 @router.post("/images/{image_id}/tag")
-async def add_tags(image_id: str, request: TagRequest, current_user: str = Depends(get_current_user)):
+async def add_tags(image_id: UUID, request: TagRequest, current_user: str = Depends(get_current_user)):
 
     try:
         tag_query = await get_supabase().table("tags").select("*").eq("name", request.tag_name).execute()
@@ -242,7 +243,7 @@ async def add_tags(image_id: str, request: TagRequest, current_user: str = Depen
 
 #get tags for specific image
 @router.get("/images/{image_id}/tags")
-async def get_tags(image_id: str, current_user: str = Depends(get_current_user)):
+async def get_tags(image_id: UUID, current_user: str = Depends(get_current_user)):
 
     try:
         query = await get_supabase().table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
@@ -269,7 +270,7 @@ class TagsUpdateRequest(BaseModel):
 
 #delete tags
 @router.delete("/images/{image_id}/tags")
-async def delete_tags(image_id: str, requests: TagsUpdateRequest, current_user: str = Depends(get_current_user)):
+async def delete_tags(image_id: UUID, requests: TagsUpdateRequest, current_user: str = Depends(get_current_user)):
 
     try:
         tag_names = requests.tag_names
@@ -301,7 +302,7 @@ class saveToWardrobeRequest(BaseModel):
 
 
 @router.post("/images/{image_id}/save-to-wardrobe")
-async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest, current_user: str = Depends(get_current_user)):
+async def save_to_wardrobe(image_id: UUID, request: saveToWardrobeRequest, current_user: str = Depends(get_current_user)):
 
     try:
         if request.tags:
@@ -324,4 +325,35 @@ async def save_to_wardrobe(image_id: str, request: saveToWardrobeRequest, curren
         return {
             "success": False,
             "message": "Failed to save image to wardrobe."
+        }
+    
+#delete user's image
+@router.delete("images/{image_id}")
+async def delete_image(image_id: UUID, current_user: str = Depends(get_current_user)):
+
+
+    try:
+        query = await get_supabase().table("images").select("image_id, file_name").eq("image_id", image_id).eq("user_id", current_user).execute()
+        if not query.data:
+            return {
+                "success": False,
+                "message": "Image not found or does not belong to you"
+            }
+
+        file_name = query.data[0]["file_name"]
+
+        await asyncio.gather(
+            get_supabase().storage.from_("images").remove([file_name]),
+            get_supabase().table("images").delete().eq("image_id", image_id).execute()
+        )
+
+        return {
+            "success": True,
+            "message": "Successfully deleted image."
+        }
+    except Exception as e:
+        logger.error(f"User {current_user} failed to delete {image_id}: {e}")
+        return {
+            "success": False,
+            "message": "Failed to delete image."
         }

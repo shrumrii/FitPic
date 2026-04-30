@@ -120,7 +120,7 @@ export default function Profile() {
             const formData = new FormData();
             formData.append("image", file);
 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/pfp`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/pfp`, {
                 method: "POST",
                 body: formData
             }, user_id);
@@ -203,7 +203,7 @@ export default function Profile() {
 
         if (!confirm("Delete this post?")) return;  // add this  
         try { 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/images/${image_id}`, {method: 'DELETE'}, user_id);
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image_id}`, {method: 'DELETE'}, user_id);
 
             if (!response.ok) {
                 console.error("Could not delete image");

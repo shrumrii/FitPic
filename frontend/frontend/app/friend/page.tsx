@@ -62,7 +62,7 @@ export default function Friend() {
     const addFriend = async (followingID: string) => {
 
         try {
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/follow`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/follow`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ following_id: followingID })
@@ -92,7 +92,7 @@ export default function Friend() {
     const removeFriend = async (followingID: string) => {
 
         try {
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/unfollow/${followingID}`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/unfollow/${followingID}`, {
                 method: "DELETE"
             }, user_id);
 

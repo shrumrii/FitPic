@@ -38,8 +38,8 @@ export default function Dashboard() {
 
             try {
                 setFilterLoading(true); 
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/feed?mode=${filterMode}`, undefined, user_id);
-
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/feed?mode=${filterMode}`, undefined, user_id);
+                console.log(response.status); 
                 if (!response.ok) {
                     console.log(await response.text());
                     throw new Error("Failed to get feed");

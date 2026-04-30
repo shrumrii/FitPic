@@ -9,10 +9,10 @@ logger = get_logger(__name__)
 
 #get user's favorited images
 @router.get("/favorites")
-async def get_favorites(user_id: str, current_user: str = Depends(get_current_user)):
+async def get_favorites(current_user: str = Depends(get_current_user)):
 
     try:
-        query = await get_supabase().table("favorites").select("user_id, images!favorites_image_id_fkey(image_id, url, created_at, users!images_user_id_fkey(username))").eq("user_id", user_id).order("created_at", desc=True).execute()
+        query = await get_supabase().table("favorites").select("user_id, images!favorites_image_id_fkey(image_id, url, created_at, users!images_user_id_fkey(username))").eq("user_id", current_user).order("created_at", desc=True).execute()
         favorites = query.data
 
         return {
@@ -20,25 +20,21 @@ async def get_favorites(user_id: str, current_user: str = Depends(get_current_us
             "data": favorites
         }
     except Exception as e:
-        logger.error(f"Failed to get favorites for {user_id}: {e}")
+        logger.error(f"Failed to get favorites for {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to get favorites."
         }
 
 class Favorite(BaseModel):
-    user_id: str
     image_id: str
 
 #favorite an image
 @router.post("/favorites")
 async def add_favorite(favorite: Favorite, current_user: str = Depends(get_current_user)):
 
-    if current_user != favorite.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     data = {
-        "user_id": favorite.user_id,
+        "user_id": current_user,
         "image_id": favorite.image_id
     }
 
@@ -58,7 +54,7 @@ async def add_favorite(favorite: Favorite, current_user: str = Depends(get_curre
         }
 
     except Exception as e:
-        logger.error(f"Failed to favorite {favorite.image_id} for {favorite.user_id}: {e}")
+        logger.error(f"Failed to favorite {favorite.image_id} for {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to favorite image."
@@ -68,11 +64,8 @@ async def add_favorite(favorite: Favorite, current_user: str = Depends(get_curre
 @router.delete("/favorites")
 async def delete_favorite(favorite: Favorite, current_user: str = Depends(get_current_user)):
 
-    if current_user != favorite.user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
     try:
-        response = await get_supabase().table("favorites").delete().eq("user_id", favorite.user_id).eq("image_id", favorite.image_id).execute()
+        response = await get_supabase().table("favorites").delete().eq("user_id", current_user).eq("image_id", favorite.image_id).execute()
         return {
             "success": True,
             "data": response.data,
@@ -80,7 +73,7 @@ async def delete_favorite(favorite: Favorite, current_user: str = Depends(get_cu
         }
 
     except Exception as e:
-        logger.error(f"Failed to unfavorite {favorite.image_id} for {favorite.user_id}: {e}")
+        logger.error(f"Failed to unfavorite {favorite.image_id} for {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to unfavorite image."

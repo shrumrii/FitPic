@@ -25,7 +25,7 @@ export default function Favorites() {
 
             try { 
                 setLoadingFavorites(true); 
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites?user_id=${user_id}`, undefined, user_id)  
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/favorites`, undefined, user_id)  
 
                 const result = await response.json(); 
                 //destructure and flatten favorites list
@@ -36,7 +36,6 @@ export default function Favorites() {
                     url: item.images.url,                                                                                                                  
                     created_at: item.images.created_at,                                                                                                            
                 })));    
-                console.log(result.data); 
 
             } catch (error) { 
                 console.error(error); 
@@ -57,7 +56,7 @@ export default function Favorites() {
                     headers: {
                         "Content-Type": 'application/json'
                     },
-                    body: JSON.stringify({ user_id, image_id })
+                    body: JSON.stringify({ image_id })
                 }, user_id);
             
             if (!response.ok) { 

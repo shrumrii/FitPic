@@ -8,11 +8,18 @@ from limiter import limiter
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
+import os 
 
 from routers import users, images, favorites, tags
 
+SUPABASE_URL = os.getenv("SUPABASE_URL")
+SUPABASE_KEY = os.getenv("SUPABASE_KEY")
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    #env var check 
+    if not SUPABASE_URL or not SUPABASE_KEY:
+        raise ValueError("SUPABASE_URL is not set")
     await init_supabase()
     yield
 
@@ -35,10 +42,10 @@ async def log_requests(request, call_next):
     request_logger.info(f"{request.method} {request.url.path} - {response.status_code}")
     return response
 
+app.include_router(tags.router)
 app.include_router(users.router)
 app.include_router(images.router)
 app.include_router(favorites.router)
-app.include_router(tags.router)
 
 @app.get("/")
 async def root():

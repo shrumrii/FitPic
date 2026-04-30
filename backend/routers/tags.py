@@ -30,12 +30,12 @@ async def get_images_by_tag(tag_name: str, current_user: str = Depends(get_curre
             "message": "Failed to get images for tag."
         }
 
-#get all images for a user's tag
-@router.get("/users/{user_id}/tags/{tag_name}")
-async def get_user_images_by_tag(user_id: str, tag_name: str, current_user: str = Depends(get_current_user)):
+#get all images for a user's tag - wip 
+@router.get("/users/tags/{tag_name}")
+async def get_user_images_by_tag(tag_name: str, current_user: str = Depends(get_current_user)):
 
     try:
-        query = await get_supabase().table("tags").select("*, image_tags(*, images(*))").eq("name", tag_name).eq("user_id", user_id).execute()
+        query = await get_supabase().table("tags").select("*, image_tags(*, images(*))").eq("name", tag_name).eq("user_id", current_user).execute()
 
         if not query.data:
             return {"success": False, "message": "Tag not found."}
@@ -48,19 +48,19 @@ async def get_user_images_by_tag(user_id: str, tag_name: str, current_user: str 
             "images": images
         }
     except Exception as e:
-        logger.error(f"Failed to get images for tag {tag_name} and user {user_id}: {e}")
+        logger.error(f"Failed to get images for tag {tag_name} and user {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to get images for tag."
         }
 
 #get style stats for a user (for wardrobe page)
-@router.get("/users/{user_id}/style-stats")
-async def get_style_stats(user_id: str, current_user: str = Depends(get_current_user)):
+@router.get("/users/style-stats")
+async def get_style_stats(current_user: str = Depends(get_current_user)):
 
     try:
         data = {}
-        query = await get_supabase().rpc("get_tag_stats", {"p_user_id": user_id}).execute()
+        query = await get_supabase().rpc("get_tag_stats", {"p_user_id": current_user}).execute()
         if not query.data:
             return {
                 "success": False,
@@ -82,19 +82,19 @@ async def get_style_stats(user_id: str, current_user: str = Depends(get_current_
             "data": data
         }
     except Exception as e:
-        logger.error(f"Failed to get style stats for user {user_id}: {e}")
+        logger.error(f"Failed to get style stats for user {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to get style stats."
         }
 
 #get color stats for a user (for wardrobe page)
-@router.get("/users/{user_id}/color-stats")
-async def get_color_stats(user_id: str, current_user: str = Depends(get_current_user)):
+@router.get("/users/color-stats")
+async def get_color_stats(current_user: str = Depends(get_current_user)):
 
     try:
         data = {}
-        query = await get_supabase().rpc("get_color_stats", {"p_user_id": user_id}).execute()
+        query = await get_supabase().rpc("get_color_stats", {"p_user_id": current_user}).execute()
         if not query.data:
             return {
                 "success": False,
@@ -112,7 +112,7 @@ async def get_color_stats(user_id: str, current_user: str = Depends(get_current_
             "data": data
         }
     except Exception as e:
-        logger.error(f"Failed to get color stats for user {user_id}: {e}")
+        logger.error(f"Failed to get color stats for user {current_user}: {e}")
         return {
             "success": False,
             "message": "Failed to get color stats."
