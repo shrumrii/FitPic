@@ -154,7 +154,7 @@ export default function Sidebar() {
                             mounted && theme === "dark" ? "bg-white/30" : "bg-white/20"
                         }`}
                     >
-                        <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
+                        <div className={`w-4 h-4 rounded-full bg-white ${mounted ? "transition-transform duration-300" : ""} ${
                             mounted && theme === "dark" ? "translate-x-5" : "translate-x-0"
                         }`} />
                     </button>

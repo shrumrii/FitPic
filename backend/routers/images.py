@@ -51,8 +51,7 @@ async def upload_image(request: Request, image: UploadFile = File(...), user_id:
             ]
         )
         print(response.text)
-
-        if response.text.strip().lower() == "no":
+        if not response.text or response.text.strip().lower() == "no":
             return {
                 "success": False,
                 "message": "Failed to validate image. Make sure that the picture is a full body picture or mirror picture."
@@ -66,7 +65,7 @@ async def upload_image(request: Request, image: UploadFile = File(...), user_id:
             contents,
             file_options={"content-type": image.content_type}
         )
-        image_url = get_supabase().storage.from_("images").get_public_url(unique_filename)
+        image_url = await get_supabase().storage.from_("images").get_public_url(unique_filename)
 
         data = {
             "url": image_url,
@@ -402,4 +401,45 @@ async def get_journal_info(image_id: UUID, current_user: str = Depends(get_curre
             "message": "Failed to retrieve analyze/journal data."
         }
 
+@router.get("/images/{image_id}/comments")
+async def get_comments(image_id: UUID, current_user: str = Depends(get_current_user)): 
+    
+    try: 
+        query = await get_supabase().table("comments").select("users(username), content, created_at").eq("image_id", str(image_id)).execute()
 
+        return { 
+            "success": True, 
+            "data": query.data
+        }
+
+    except Exception as e: 
+        logger.error(f"Failed to get comments from {image_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to get comments from image."
+        }
+
+class commentRequest(BaseModel):
+    comment: str
+@router.post("/images/{image_id}/comment")
+async def post_comment(image_id: UUID, request: commentRequest, current_user: str = Depends(get_current_user)): 
+
+    try: 
+        await get_supabase().table("comments").insert({
+            "image_id": image_id, 
+            "user_id": current_user, 
+            "content": request.comment 
+        }).eq("image_id", str(image_id)).select() 
+
+        return { 
+            "success": False, 
+            "message": "Successfully posted comment."
+        }
+    
+    except Exception as e: 
+        logger.error(f"User {current_user} Failed to post comment to {image_id}: {e}")
+        return { 
+            "success": False, 
+            "message": "Failed to post comment to image."
+        }
+    

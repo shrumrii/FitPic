@@ -10,6 +10,7 @@ import Heart from "@/components/Heart";
 import { loggedFetch } from "@/lib/api";
 import Sidebar from "@/components/sidebar";
 import { useTheme } from "next-themes"; 
+import ImageModal from "@/components/ImageModal"
 
 export default function Dashboard() {
 
@@ -22,7 +23,7 @@ export default function Dashboard() {
     const [fetched, setFetched] = useState(false);
     const [dashboardError, setDashboardError] = useState("");
     const [filterMode, setFilterMode] = useState<"recent" | "most_liked">("recent"); 
-    const [dropdownOpen, setDropdownOpen] = useState(false); 
+    const [dropdownOpen, setDropdownOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null); 
     const [filterLoading, setFilterLoading] = useState(false); 
     const { theme, setTheme } = useTheme(); 
@@ -276,23 +277,15 @@ export default function Dashboard() {
                 {dashboardError && <p className="text-xs text-red-500">{dashboardError}</p>}
 
             </main>
-
-            {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
-                <div className="flex">
-                    <div className="relative aspect-[4/5] w-2/3">
-                        <img src={selectedImage.url} alt="fit" className="object-cover"/>
-                    </div>
-                    <div className="flex flex-col gap-2 p-5 w-1/3">
-                        <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
-                        <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
-                        <div className="flex items-center justify-between mt-auto">
-                                <p className="text-sm font-medium text-black dark:text-white">{selectedImage.likes} {selectedImage.likes === 1 ? 'like' : 'likes'}</p>
-                                <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                <Heart filled={favoritedImageIDs.has(selectedImage.image_id)} onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)} />
-                        </div>
-                    </div>
-                </div>
-            </Modal>)}
+            
+            {selectedImage && (
+                <ImageModal 
+                    image={selectedImage} 
+                    filled={favoritedImageIDs.has(selectedImage.image_id)} 
+                    onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)}
+                    onClose={() => setSelectedImage(null)}
+                />
+            )}
         </div>
     );
 }

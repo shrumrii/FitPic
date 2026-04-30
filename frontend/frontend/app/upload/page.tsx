@@ -38,6 +38,7 @@ export default function UploadPage() {
         if (!selectedFile) return;
         setUploading(true);
         setSuccessMessage("");
+        setError("");
 
         try {
             const formData = new FormData();
@@ -71,9 +72,9 @@ export default function UploadPage() {
         } catch (error) {
             console.error("Upload failed", error);
             alert("Upload failed. Please try again.");
+        } finally {
+            setUploading(false);
         }
-
-        setUploading(false);
     };
 
     const handleAnalyze = async (image_id: string, image_url: string) => { 
@@ -143,13 +144,16 @@ export default function UploadPage() {
                 </div>
 
                 {selectedFile && (
-                    <button
-                        className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-brand-pink dark:enabled:hover:bg-brand-orange enabled:hover:text-white transition-colors dark:bg-white dark:text-black disabled:opacity-50"
-                        onClick={handleUpload}
-                        disabled={uploading || !!uploadedImage}
-                    >
-                        {uploading ? "Uploading..." : "Upload"}
-                    </button>
+                    <>
+                        <button
+                            className="mt-4 bg-black text-white text-sm font-medium rounded-lg px-5 py-2.5 w-full enabled:hover:bg-brand-pink dark:enabled:hover:bg-brand-orange enabled:hover:text-white transition-colors dark:bg-white dark:text-black disabled:opacity-50"
+                            onClick={handleUpload}
+                            disabled={uploading || !!uploadedImage}
+                        >
+                            {uploading ? "Uploading..." : "Upload"}
+                        </button>
+                        {error && <p className="mt-2 text-xs text-red-500 text-center">{error}</p>}
+                    </>
                 )}
 
                 {successMessage && (

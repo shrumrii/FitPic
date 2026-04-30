@@ -8,6 +8,7 @@ import Modal from "@/components/modal"
 import { useUser } from "@/context/userContext";
 import Heart from "@/components/Heart";
 import { loggedFetch } from "@/lib/api"; 
+import ImageModal from "@/components/ImageModal"
 
 export default function Favorites() {
 
@@ -15,9 +16,8 @@ export default function Favorites() {
     const router = useRouter();
 
     const [loadingFavorites, setLoadingFavorites] = useState(false);
-    const [favorites, setFavorites] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string }[]>([]);
-    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string } | null>(null);
-
+    const [favorites, setFavorites] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, likes: number }[]>([]);
+    const [selectedImage, setSelectedImage] = useState<{user_id: string, username: string, image_id: string, url: string, created_at: string, likes: number} | null>(null);
     useEffect(() => {
         const getFavorites = async () => {
             if (loading) return;
@@ -33,8 +33,9 @@ export default function Favorites() {
                     user_id: item.user_id,    
                     username: item.images.users.username,                                                                                                 
                     image_id: item.images.image_id,                                                                                                        
-                    url: item.images.url,                                                                                                                  
-                    created_at: item.images.created_at,                                                                                                            
+                    url: item.images.url,
+                    created_at: item.images.created_at,
+                    likes: item.images.favorites?.[0]?.count ?? 0,
                 })));    
 
             } catch (error) { 
@@ -113,23 +114,14 @@ export default function Favorites() {
 
             </main>
 
-            {selectedImage && (<Modal onClose={() => setSelectedImage(null)}>
-                <div className="flex">
-                    <div className="relative aspect-[4/5] w-2/3">
-                        <Image src={selectedImage.url} alt="fit" fill className="object-cover"/>
-                    </div>
-                    <div className="flex flex-col gap-2 p-5 w-1/3">
-                        <p className="text-xs text-zinc-400 font-medium uppercase tracking-wide">Posted by</p>
-                        <p className="text-sm font-medium text-black dark:text-white">{selectedImage.username}</p>
-                        <div className="flex items-center justify-between mt-auto">
-                                <p className="text-xs text-zinc-400">{new Date(selectedImage.created_at).toLocaleDateString()}</p>
-                                <Heart filled={true} onToggle={() => unfavorite(selectedImage.image_id)} />
-                                
-                                
-                            </div>
-                    </div>
-                </div>
-            </Modal>)}
+            {selectedImage && (
+                <ImageModal 
+                    image={selectedImage} 
+                    filled={true} 
+                    onToggle={() => unfavorite(selectedImage.image_id)}
+                    onClose={() => setSelectedImage(null)}
+                />
+            )}
         </div>
     );
 }
