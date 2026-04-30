@@ -238,7 +238,7 @@ async def upload_pfp(image: UploadFile = File(...), current_user: str = Depends(
         }
 
 class AddFollower(BaseModel):
-    following_id: str
+    following_id: UUID 
 
 #follow another user
 @router.post("/users/follow")
@@ -272,7 +272,7 @@ async def add_follower(following: AddFollower, current_user: str = Depends(get_c
 
 #unfollow user
 @router.delete("/users/unfollow/{following_id}")
-async def remove_follower(following_id: str, current_user: str = Depends(get_current_user)):
+async def remove_follower(following_id: UUID, current_user: str = Depends(get_current_user)):
 
     try:
         await get_supabase().table("follows").delete().eq("follower_id", current_user).eq("following_id", following_id).execute()

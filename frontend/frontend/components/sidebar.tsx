@@ -13,7 +13,10 @@ export default function Sidebar() {
     const [followerCount, setFollowerCount] = useState(0);
     const [followingCount, setFollowingCount] = useState(0);
     const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
     const router = useRouter();
+
+    useEffect(() => setMounted(true), []);
 
     useEffect(() => {
         if (!user_id) return;
@@ -134,7 +137,7 @@ export default function Sidebar() {
             <div className="px-2 pb-2 border-t border-white/20 pt-2 flex flex-col gap-0.5">
                 
                 <div className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-white/70">
-                    {theme === "dark" ? (
+                    {mounted && (theme === "dark" ? (
                         <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
                             <circle cx="8" cy="8" r="3.5" stroke="currentColor" strokeWidth="1.2"/>
                             <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.1 3.1l1 1M11.9 11.9l1 1M11.9 3.1l-1 1M3.1 11.9l1-1" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
@@ -143,16 +146,16 @@ export default function Sidebar() {
                         <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
                             <path d="M13.5 10A6 6 0 0 1 6 2.5a6 6 0 1 0 7.5 7.5z" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round"/>
                         </svg>
-                    )}
-                    <span className="flex-1">{theme === "dark" ? "Light mode" : "Dark mode"}</span>
+                    ))}
+                    <span className="flex-1">{mounted ? (theme === "dark" ? "Light mode" : "Dark mode") : "Dark mode"}</span>
                     <button
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
                         className={`w-10 h-5 rounded-full transition-colors duration-300 flex items-center px-0.5 ${
-                            theme === "dark" ? "bg-white/30" : "bg-white/20"
+                            mounted && theme === "dark" ? "bg-white/30" : "bg-white/20"
                         }`}
                     >
                         <div className={`w-4 h-4 rounded-full bg-white transition-transform duration-300 ${
-                            theme === "dark" ? "translate-x-5" : "translate-x-0"
+                            mounted && theme === "dark" ? "translate-x-5" : "translate-x-0"
                         }`} />
                     </button>
                 </div>

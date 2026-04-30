@@ -4,6 +4,8 @@ import { useRouter } from "next/navigation";
 import { useSearchParams } from "next/navigation";
 import { loggedFetch } from "@/lib/api";
 import Sidebar from "@/components/sidebar";
+import DragObject from "@/components/DragObject";
+import { DragDropProvider } from '@dnd-kit/react';
 
 export default function Analyze({ params }: { params: Promise<{ image_id: string }> }) {
     const { image_id } = use(params);
@@ -17,11 +19,13 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
     const [imageLoaded, setImageLoaded] = useState(false);
-    const [redoResult, setRedoResult] = useState<{ analysis: string; tags: string[] } | null>(null);
+    const [redoAnalysis, setRedoAnalysis] = useState<{ analysis: string } | null>(null);
     const router = useRouter();
 
-    const displayAnalysis = redoResult?.analysis || analysis;
-    const displayTags = redoResult?.tags || initialTags;
+    const [aiTags, setAiTags] = useState<string[]>(initialTags ?? []); 
+    const [userTags, setUserTags] = useState<string[]>([]); 
+    const displayAnalysis = redoAnalysis?.analysis || analysis;
+    const displayTags = [...aiTags, ...userTags]; 
 
     const [saveLoading, setSaveLoading] = useState(false); 
     const [saveError, setSaveError] = useState("");
@@ -47,14 +51,17 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 setError("Too many requests. Please try again later."); 
                 return; 
             } 
-
             if (!response.ok) throw new Error("Could not analyze image.");
+
             const result = await response.json();
+
             if (!result.success) {
                 setError(result.message);
                 return;
             }
-            setRedoResult({ analysis: result.analysis, tags: result.tags });
+            //set ai tags and analysis 
+            setAiTags(result.tags); 
+            setRedoAnalysis({ analysis: result.analysis });
 
         } catch (err) {
             console.error(err);
@@ -97,6 +104,13 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
             setSaveError("Could not save to wardrobe. Try again.");
         } finally { 
             setSaveLoading(false);
+        }
+    }
+
+    //move ai tag to user tag if no duplicates are found - for drag and drop 
+    const onTagMove = (tag: string) => { 
+        if (!userTags.includes(tag)) { 
+            setUserTags(prev => [...prev, tag]); 
         }
     }
 
@@ -157,21 +171,15 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                     </div>
                                 )}
 
-                                {displayTags && (
-                                    <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
-                                        <p className="text-[11px] font-medium tracking-widest uppercase text-zinc-400 mb-3">Tags</p>
-                                        <div className="flex flex-wrap gap-2">
-                                            {displayTags.map((tag: string, i: number) => (
-                                                <span
-                                                    key={`${tag}-${i}`}
-                                                    className="text-xs px-2.5 py-1 rounded-full border border-zinc-200 dark:border-zinc-700 text-zinc-600 dark:text-zinc-300"
-                                                >
-                                                    {tag}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                <div className="bg-white dark:bg-zinc-900 border border-zinc-100 dark:border-zinc-800 rounded-xl px-4 py-3.5">
+                                    <DragDropProvider onDragEnd={(e) => {
+                                        if (e.operation.source) {
+                                            onTagMove(e.operation.source.id as string);
+                                        }
+                                    }}>
+                                        <DragObject aiTags={aiTags} userTags={userTags} />
+                                    </DragDropProvider>
+                                </div>
 
                                 <button 
                                     className="bg-zinc-900 dark:bg-zinc-800 rounded-xl px-4 py-3.5 flex items-center gap-3 cursor-pointer hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium"
