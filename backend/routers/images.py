@@ -426,13 +426,13 @@ async def post_comment(image_id: UUID, request: commentRequest, current_user: st
 
     try: 
         await get_supabase().table("comments").insert({
-            "image_id": image_id, 
-            "user_id": current_user, 
-            "content": request.comment 
-        }).eq("image_id", str(image_id)).select() 
+            "image_id": str(image_id),
+            "user_id": current_user,
+            "content": request.comment
+        }).execute()
 
-        return { 
-            "success": False, 
+        return {
+            "success": True,
             "message": "Successfully posted comment."
         }
     
