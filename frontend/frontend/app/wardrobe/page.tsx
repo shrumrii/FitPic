@@ -220,7 +220,7 @@ export default function Wardrobe() {
                             { colorStats.top_5_colors.length === 0 ? <p className="text-sm text-zinc-400">No colours yet.</p> 
                                 : colorStats.top_5_colors.map((c) => (
                                     <div key={c.color} className="flex flex-col items-center gap-1">
-                                        <div className="rounded-full" style={{ backgroundColor: c.color, width: 32, height: 32 }} />
+                                        <div className="rounded-full border border-zinc-200 dark:border-zinc-700" style={{ backgroundColor: c.color, width: 32, height: 32 }} />
                                     </div>
                                 ))
                             }
