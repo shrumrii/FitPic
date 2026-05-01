@@ -12,6 +12,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
     const searchParams = useSearchParams();
     const user_id = searchParams.get("user_id") ?? undefined;
     const image_url = decodeURIComponent(searchParams.get("image_url") ?? "") || undefined;
+    const [imageUrl, setImageUrl] = useState(image_url);
     const analysis = decodeURIComponent(searchParams.get("analysis") ?? "") || undefined;
     const tagsParam = searchParams.get("tags");
     const initialTags = tagsParam ? JSON.parse(decodeURIComponent(tagsParam)) : null;
@@ -53,11 +54,13 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                 console.error("error");
                 return;  
             }
+            console.log(result.data); 
 
-            setUserTags(result.data.tags); 
-            setNotes(result.data.notes); 
-            setDescription(result.data.description); 
-            setRating(result.data.rating); 
+            setUserTags(result.data.tags ?? []);                                                                                                       
+            setNotes(result.data.notes ?? "");                                                                                                         
+            setDescription(result.data.description ?? "");                                                                                             
+            setRating(result.data.rating ?? null);                                                                                                     
+            if (!imageUrl) setImageUrl(result.data.url); 
             if (result.data.analysis) setRedoAnalysis({ analysis: result.data.analysis });
 
         } catch (error) { 
@@ -187,10 +190,11 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                     {/* left: image + button */}
                     <div>
                         <div className="rounded-xl overflow-hidden border border-zinc-200 dark:border-zinc-800 bg-zinc-50 dark:bg-zinc-900">
-                            {image_url ? (
+                            {imageUrl ? (
                                 <img
-                                    src={image_url}
+                                    src={imageUrl}
                                     alt="outfit"
+                                    ref={(el) => { if (el?.complete) setImageLoaded(true); }}                                                                              
                                     onLoad={() => setImageLoaded(true)}
                                     className={`w-full object-cover transition-opacity duration-300 ${imageLoaded ? "opacity-100" : "opacity-0"}`}
                                 />

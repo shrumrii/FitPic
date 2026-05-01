@@ -375,9 +375,8 @@ async def add_notes(image_id: UUID, request: journalRequest, current_user: str =
 async def get_journal_info(image_id: UUID, current_user: str = Depends(get_current_user)): 
 
     try: 
-        query = await get_supabase().table("images").select("analysis, analyzed_at, notes, description, rating").eq("image_id", image_id).execute()
+        query = await get_supabase().table("images").select("analysis, url, analyzed_at, notes, description, rating").eq("image_id", image_id).execute()
         data = query.data[0]
-
 
         #get tags 
         tags_query = await get_supabase().table("image_tags").select("*, tags(*)").eq("image_id", image_id).execute()
@@ -391,7 +390,8 @@ async def get_journal_info(image_id: UUID, current_user: str = Depends(get_curre
                 "notes": data["notes"],
                 "description": data["description"],
                 "rating": data["rating"], 
-                "tags": tags
+                "tags": tags,
+                "url": data["url"]
             }
         }
     except Exception as e: 
