@@ -12,6 +12,8 @@ type ImageModalProps = {
     onClose: () => void;
     onView?: () => void;
     user_id?: string;
+    username?: string; 
+    showComments?: boolean; 
 };
 
 type Comment = {
@@ -20,21 +22,27 @@ type Comment = {
     users: { username: string };
 };
 
-export default function ImageModal({ image, filled, onToggle, onClose, onView, user_id, showComments = true }: ImageModalProps) {
+export default function ImageModal({ image, filled, onToggle, onClose, onView, user_id, username, showComments = true }: ImageModalProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState("");
     const [posting, setPosting] = useState(false);
     const commentsEndRef = useRef<HTMLDivElement>(null);
+    const [commentsLoading, setCommentsLoading] = useState(true); 
 
     useEffect(() => {
         if (!showComments) return;
         const fetchComments = async () => {
             try {
+                setCommentsLoading(true); 
                 const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/images/${image.image_id}/comments`, undefined, user_id);
                 if (!response.ok) return;
                 const result = await response.json();
                 if (result.success) setComments(result.data);
-            } catch (err) { console.error(err); }
+            } catch (err) { 
+                console.error(err); 
+            } finally { 
+                setCommentsLoading(false); 
+            }
         };
         fetchComments();
     }, [image.image_id]);
@@ -55,7 +63,7 @@ export default function ImageModal({ image, filled, onToggle, onClose, onView, u
             if (!response.ok) return;
             const result = await response.json();
             if (result.success) {
-                setComments(prev => [...prev, { content: commentInput.trim(), created_at: new Date().toISOString(), users: { username: "You" } }]);
+                setComments(prev => [...prev, { content: commentInput.trim(), created_at: new Date().toISOString(), users: { username: username ?? "You" } }]);
                 setCommentInput("");
             }
         } catch (err) { console.error(err); } finally { setPosting(false); }
@@ -88,7 +96,13 @@ export default function ImageModal({ image, filled, onToggle, onClose, onView, u
                     {showComments && (
                         <>
                             <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-3">
-                                {comments.length === 0 ? (
+                                {commentsLoading ? (
+                                    <div className="flex justify-center mt-4">
+                                        <div className="w-4 h-4 border-2 border-zinc-300 border-t-zinc-500 rounded-full animate-spin" />
+                                    </div>
+                                ) :
+                            
+                                comments.length === 0 ? (
                                     <p className="text-xs text-zinc-400 text-center mt-4">No comments yet.</p>
                                 ) : (
                                     comments.map((c, i) => (

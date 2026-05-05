@@ -505,6 +505,9 @@ export default function Profile() {
                     onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)}
                     onClose={() => setSelectedImage(null)}
                     onView={() => router.push(`/analyze/${selectedImage.image_id}`)}
+                    user_id={user_id} 
+                    username={username}
+                    showComments={false} 
                 />
             )}
 

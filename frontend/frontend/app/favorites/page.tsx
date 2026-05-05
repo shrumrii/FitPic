@@ -12,7 +12,7 @@ import ImageModal from "@/components/ImageModal"
 
 export default function Favorites() {
 
-    const { user_id, loading } = useUser() ?? { user_id: "", loading: false};
+    const { username, user_id, loading } = useUser() ?? { username: "", user_id: "", loading: false};
     const router = useRouter();
 
     const [loadingFavorites, setLoadingFavorites] = useState(false);
@@ -120,6 +120,9 @@ export default function Favorites() {
                     filled={true} 
                     onToggle={() => unfavorite(selectedImage.image_id)}
                     onClose={() => setSelectedImage(null)}
+                    user_id={user_id} 
+                    username={username}
+                    showComments={true} 
                 />
             )}
         </div>

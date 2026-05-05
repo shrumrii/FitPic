@@ -284,6 +284,9 @@ export default function Dashboard() {
                     filled={favoritedImageIDs.has(selectedImage.image_id)} 
                     onToggle={() => favoritedImageIDs.has(selectedImage.image_id) ? setUnfavorite(selectedImage.image_id) : setFavorite(selectedImage.image_id)}
                     onClose={() => setSelectedImage(null)}
+                    user_id={user_id} 
+                    username={username} 
+                    showComments={true} 
                 />
             )}
         </div>
