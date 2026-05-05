@@ -1,6 +1,5 @@
 "use client";
-import Navbar from "@/components/navbar"
-import Image from "next/image";
+import Sidebar from "@/components/sidebar"; 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Spinner from "@/components/spinner";
@@ -35,7 +34,7 @@ export default function Rankings() {
 
             try { 
                 setLoadingRankings(true); 
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, undefined, user_id);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/rankings`, undefined, user_id);
 
                 if (!response.ok) {
                     console.log(await response.text());
@@ -110,7 +109,7 @@ export default function Rankings() {
     const saveRankings = async () => { 
         try { 
             setSaving(true); 
-            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, {
+            const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/rankings`, {
                 method: "PUT",
                 headers: {
                     "Content-Type": "application/json"
@@ -139,9 +138,11 @@ export default function Rankings() {
     if (loading || loadingRankings) return <Spinner/>; 
 
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-7xl mx-auto px-6 py-8 relative">
+
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/> 
+            <main className="w-full px-6 py-8">
+
                 <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     My Rankings 
                 </h1>

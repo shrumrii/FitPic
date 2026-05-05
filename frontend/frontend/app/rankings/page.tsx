@@ -1,5 +1,5 @@
 "use client";
-import Navbar from "@/components/navbar"
+import Sidebar from "@/components/sidebar" 
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -25,7 +25,7 @@ export default function Rankings() {
 
             try { 
                 setLoadingRankings(true); 
-                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/${user_id}/rankings`, undefined, user_id);
+                const response = await loggedFetch(`${process.env.NEXT_PUBLIC_API_URL}/users/rankings`, undefined, user_id);
 
                 if (!response.ok) { 
                     console.log(await response.text());
@@ -56,11 +56,10 @@ export default function Rankings() {
     const third = rankings.find(r => r.rank === 3);
     const fourth = rankings.find(r => r.rank === 4);
     const fifth = rankings.find(r => r.rank === 5);
-
     return (
-        <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-            <Navbar/>
-            <main className="w-full max-w-7xl mx-auto px-6 py-8 relative">
+        <div className="flex min-h-screen bg-white dark:bg-black">
+            <Sidebar/> 
+            <main className="w-full px-6 py-8">
                 <h1 className="text-2xl font-semibold tracking-tight text-black dark:text-white mb-6">
                     My Rankings 
                 </h1>

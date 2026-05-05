@@ -294,7 +294,7 @@ export default function Analyze({ params }: { params: Promise<{ image_id: string
                                         onChange={(e) => setDescription(e.target.value)}   
                                         onBlur={handleSaveJournal}
                                         type="text"
-                                        placeholder="Maison Margiela Gats, Lemaire shirt..."
+                                        placeholder="Lemaire shirt, Margiela Tabis..."
                                         className="w-full text-sm bg-transparent border border-zinc-200 dark:border-zinc-700 rounded-lg px-3 py-2 text-zinc-700 dark:text-zinc-300 placeholder:text-zinc-300 dark:placeholder:text-zinc-600 focus:outline-none focus:border-zinc-400"
                                     />
                                 </div>

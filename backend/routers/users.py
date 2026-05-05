@@ -131,6 +131,65 @@ async def get_analyzed_images(current_user: str = Depends(get_current_user)):
             "message": "Failed to get analyzed images."
         }
 
+
+#load existing rankings page
+@router.get("/users/rankings")
+async def get_rankings(current_user: str = Depends(get_current_user)):
+    try:
+        query = await get_supabase().table("rankings").select("*, images(url)").eq("user_id", current_user).order("rank", desc=True).execute()
+        rankings = query.data
+
+        return {
+            "success": True,
+            "data": rankings
+        }
+    except Exception as e:
+        logger.error(f"Failed to get personal rankings for {current_user}: {e}")
+        return {
+            "success": False,
+            "message": "Failed to get rankings"
+        }
+
+class Ranking(BaseModel):
+    image_id: str
+    rank: int
+
+class RankingList(BaseModel):
+    rankings: list[Ranking]
+
+#save new rankings
+@router.put("/users/rankings")
+async def save_rankings(rankings: RankingList, current_user: str = Depends(get_current_user)):
+
+    # add back in when i change the endpoint to include params (rankings nost just for urself)
+    # if str(current_user) != str(user_id):
+    #     raise HTTPException(status_code=403, detail="Forbidden")
+
+    try:
+        await get_supabase().table("rankings").delete().eq("user_id", current_user).execute()
+
+        new_rankings = []
+        for item in rankings.rankings:
+            data = {
+                "user_id": current_user,
+                "image_id": item.image_id,
+                "rank": item.rank
+            }
+            new_rankings.append(data)
+
+        await get_supabase().table("rankings").insert(new_rankings).execute()
+
+        return {
+            "success": True,
+            "message": "Rankings saved successfully"
+        }
+    except Exception as e:
+        logger.error(f"Failed to save new personal rankings for {current_user}: {e}")
+        return {
+            "success": False,
+            "message": "Failed to save rankings"
+        }
+    
 #get user by id, used widely across app
 @router.get("/users/{user_id}")
 async def get_user(user_id: UUID, current_user: str = Depends(get_current_user)):
@@ -324,61 +383,4 @@ async def get_followers(user_id: UUID, current_user: str = Depends(get_current_u
         return {
             "success": False,
             "message": "Failed to get followers."
-        }
-
-#load existing rankings page
-@router.get("/users/{user_id}/rankings")
-async def get_rankings(user_id: UUID, current_user: str = Depends(get_current_user)):
-    try:
-        query = await get_supabase().table("rankings").select("*, images(url)").eq("user_id", user_id).order("rank", desc=True).execute()
-        rankings = query.data
-
-        return {
-            "success": True,
-            "data": rankings
-        }
-    except Exception as e:
-        logger.error(f"Failed to get personal rankings for {user_id}: {e}")
-        return {
-            "success": False,
-            "message": "Failed to get rankings"
-        }
-
-class Ranking(BaseModel):
-    image_id: str
-    rank: int
-
-class RankingList(BaseModel):
-    rankings: list[Ranking]
-
-#save new rankings
-@router.put("/users/{user_id}/rankings")
-async def save_rankings(user_id: UUID, rankings: RankingList, current_user: str = Depends(get_current_user)):
-
-    if current_user != user_id:
-        raise HTTPException(status_code=403, detail="Forbidden")
-
-    try:
-        await get_supabase().table("rankings").delete().eq("user_id", user_id).execute()
-
-        new_rankings = []
-        for item in rankings.rankings:
-            data = {
-                "user_id": user_id,
-                "image_id": item.image_id,
-                "rank": item.rank
-            }
-            new_rankings.append(data)
-
-        await get_supabase().table("rankings").insert(new_rankings).execute()
-
-        return {
-            "success": True,
-            "message": "Rankings saved successfully"
-        }
-    except Exception as e:
-        logger.error(f"Failed to save new personal rankings for {user_id}: {e}")
-        return {
-            "success": False,
-            "message": "Failed to save rankings"
         }

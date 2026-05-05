@@ -58,13 +58,25 @@ export default function Sidebar() {
             ),
         },
         {
-            label: "Wardrobe",
+            label: "My Wardrobe",
             href: "/wardrobe",
             icon: (
                 <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
                     <rect x="2" y="3" width="12" height="10" rx="2" stroke="currentColor" strokeWidth="1.2"/>
                     <path d="M5 3V2M11 3V2" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round"/>
                     <path d="M2 7h12" stroke="currentColor" strokeWidth="1.2"/>
+                </svg>
+            ),
+        },
+        {
+            label: "My Rankings",
+            href: "/rankings",
+            icon: (
+                <svg className="w-4 h-4" viewBox="0 0 16 16" fill="none">
+                    <rect x="1" y="8" width="4" height="6" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                    <rect x="6" y="5" width="4" height="9" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                    <rect x="11" y="10" width="4" height="4" rx="0.75" stroke="currentColor" strokeWidth="1.2"/>
+                    <path d="M8 2L8.6 3.5H10.5L9 4.5L9.5 6L8 5L6.5 6L7 4.5L5.5 3.5H7.4L8 2Z" fill="currentColor"/>
                 </svg>
             ),
         },
