@@ -123,6 +123,7 @@ export default function Favorites() {
                     user_id={user_id} 
                     username={username}
                     showComments={true} 
+                    showLikes={false}
                 />
             )}
         </div>

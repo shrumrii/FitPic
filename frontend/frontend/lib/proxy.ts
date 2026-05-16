@@ -49,11 +49,16 @@ export async function updateSession(request: NextRequest) {
         !request.nextUrl.pathname.startsWith('/signup') &&
         !request.nextUrl.pathname.startsWith('/welcome') &&
         !request.nextUrl.pathname.startsWith('/reset-password') &&
-        !request.nextUrl.pathname.startsWith('/update-password') &&
-        !(request.nextUrl.pathname === '/')
-    ) {
+        !request.nextUrl.pathname.startsWith('/update-password'))
+    {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
+        return NextResponse.redirect(url)
+    } 
+
+    if (!user && request.nextUrl.pathname === '/') { 
+        const url = request.nextUrl.clone()
+        url.pathname = '/welcome'
         return NextResponse.redirect(url)
     }
 

@@ -14,6 +14,7 @@ type ImageModalProps = {
     user_id?: string;
     username?: string; 
     showComments?: boolean; 
+    showLikes?: boolean; 
 };
 
 type Comment = {
@@ -22,7 +23,7 @@ type Comment = {
     users: { username: string };
 };
 
-export default function ImageModal({ image, filled, onToggle, onClose, onView, user_id, username, showComments = true }: ImageModalProps) {
+export default function ImageModal({ image, filled, onToggle, onClose, onView, user_id, username, showComments=true, showLikes=true }: ImageModalProps) {
     const [comments, setComments] = useState<Comment[]>([]);
     const [commentInput, setCommentInput] = useState("");
     const [posting, setPosting] = useState(false);
@@ -89,7 +90,7 @@ export default function ImageModal({ image, filled, onToggle, onClose, onView, u
                             )}
                             <div className="flex items-center gap-1">
                                 <Heart filled={filled} onToggle={onToggle} />
-                                <span className="text-xs text-zinc-400">{image.likes}</span>
+                                {showLikes && <span className="text-xs text-zinc-400">{image.likes}</span>} 
                             </div>
                         </div>
                     </div>

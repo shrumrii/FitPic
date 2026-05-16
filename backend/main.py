@@ -23,7 +23,7 @@ async def lifespan(app: FastAPI):
     await init_supabase()
     yield
 
-app = FastAPI(lifespan=lifespan)
+app = FastAPI(lifespan=lifespan, docs_url=None, redoc_url=None)
 
 #exception handlers for 429 requests 
 app.state.limiter = limiter
